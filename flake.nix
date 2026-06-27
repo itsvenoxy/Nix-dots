@@ -5,6 +5,17 @@
     # Unstable, damit Hyprland & Co aktuell sind (passt zum Arch-Rolling-Gefühl)
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # home-manager: KEIN release-Branch -> folgt master, weil master der zu
+    # nixos-unstable passende Zweig ist (release-XX.XX gehoert zu nixos-XX.XX).
+    # Wichtig: master nutzt nixpkgs' portable-services-Framework via
+    #   import (pkgs.path + "/lib/services/lib.nix")
+    # (Modul services-modular). Das gibt es in nixpkgs erst ab 2026-04-04
+    # (commit a338deb8, "lib/services: move portable service infrastructure
+    # out of nixos/"). Darum MUSS die in flake.lock gepinnte nixpkgs-unstable-
+    # Revision >= diesem Datum sein, sonst:
+    #   error: path '.../lib/services/lib.nix' does not exist
+    # Die committete flake.lock haelt beide Inputs auf einem zueinander
+    # kompatiblen, frischen Stand fest -> reproduzierbarer nixos-install.
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
