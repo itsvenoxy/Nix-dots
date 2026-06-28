@@ -18,6 +18,27 @@ let
         --add-flags "--disable-gpu"
     '';
   });
+
+  # Claude Desktop: k3d3-FHS-Variante neu gebaut. Upstream-FHS hat weder
+  # xdg-open noch einen Browser -> der OAuth-Login kann kein Browser-Fenster
+  # oeffnen ("kein Google-Fenster"). Fix: xdg-utils in die Sandbox + BROWSER
+  # auf brave-origin (per /nix-Mount aus der Sandbox erreichbar).
+  claude-desktop-fixed =
+    let cd = inputs.claude-desktop.packages.${pkgs.stdenv.hostPlatform.system}.claude-desktop;
+    in pkgs.buildFHSEnv {
+      name = "claude-desktop";
+      targetPkgs = p: with p; [ docker glibc openssl nodejs uv xdg-utils ];
+      runScript = "${cd}/bin/claude-desktop";
+      profile = ''
+        export BROWSER=${pkgs.brave-origin}/bin/brave-origin
+      '';
+      extraInstallCommands = ''
+        mkdir -p $out/share/applications
+        cp ${cd}/share/applications/claude.desktop $out/share/applications/
+        mkdir -p $out/share/icons
+        cp -r ${cd}/share/icons/* $out/share/icons/
+      '';
+    };
 in
 {
   # Unfree-Pakete erlauben (Claude Desktop, claude-code, NVIDIA-Treiber, ...)
@@ -236,8 +257,8 @@ in
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
     kdePackages.plasma-browser-integration
 
-    # Claude Desktop (FHS-Variante -> MCP-Server via npx/uvx/docker nutzbar)
-    inputs.claude-desktop.packages.${pkgs.system}.claude-desktop-with-fhs
+    # Claude Desktop (FHS-Variante mit xdg-utils-Fix, siehe oben)
+    claude-desktop-fixed
 
     # kitty/fish/starship liefert das illogical-impulse home-manager-Modul
   ];
