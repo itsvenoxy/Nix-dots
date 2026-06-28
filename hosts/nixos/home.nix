@@ -6,11 +6,13 @@ let
   marketplace = pkgs.vscode-marketplace;
 
   # Monitor-Setup fuer die Lua-Config der Dots (hl.monitor aus hyprland/lib).
-  # Beide Panels 2560x1440; DP-4 (MSI MAG322CQR) mit 165 Hz, rechts neben
-  # DP-3 (MAG321CURV, 4K-Panel hier auf 1440p@60).
+  # DP-3 (MAG321CURV) ist ein 4K-Panel -> NATIV 3840x2160 fahren und mit
+  # Skalierung 1.5 auf logisch 2560x1440 bringen (scharf, UI-Groesse wie 1440p).
+  # DP-4 (MSI MAG322CQR) ist natives 1440p -> 2560x1440@165, Skalierung 1.
+  # Beide haben so logisch 2560x1440 -> gleiche Groesse, nahtloser Uebergang.
   monitorsLua = ''
     -- Monitore (von home-manager gesetzt, siehe home.nix)
-    hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",    scale = "1" })
+    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",    scale = "1.5" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "2560x0", scale = "1" })
   '';
 in
