@@ -207,6 +207,15 @@
   # Flakes + neue Nix-Kommandos aktivieren
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # Praktische Aliase fuers Rebuilden (Config liegt unter /root/Nix-dots)
+  environment.shellAliases = {
+    nrs = "sudo nixos-rebuild switch --flake /root/Nix-dots#nixos --impure";
+    nrt = "sudo nixos-rebuild test   --flake /root/Nix-dots#nixos --impure";
+    nrb = "sudo nixos-rebuild boot   --flake /root/Nix-dots#nixos --impure";
+    # erst neueste Config ziehen, dann switchen
+    nixup = "sudo git -C /root/Nix-dots pull origin main && sudo nixos-rebuild switch --flake /root/Nix-dots#nixos --impure";
+  };
+
   # sudo fuer wheel ohne extra Config
   security.sudo.wheelNeedsPassword = true;
 
