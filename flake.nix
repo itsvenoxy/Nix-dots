@@ -22,9 +22,11 @@
     };
 
     # end-4 / illogical-impulse Hyprland-Dots als home-manager-Modul (+ QuickShell).
-    # Upstream soymou (klassische .conf-Hyprland-Config).
+    # Fork hmk114: Lua-Hyprland-Config, kompatibel mit aktuellem Hyprland.
+    # WICHTIG: NICHT auf soymou wechseln - dessen klassische .conf nutzt
+    # entfernte Optionen (dwindle:pseudotile, misc:vfr) -> 70+ Config-Errors.
     illogical-flake = {
-      url = "github:soymou/illogical-flake";
+      url = "github:hmk114/illogical-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
