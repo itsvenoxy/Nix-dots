@@ -1,5 +1,20 @@
 { config, pkgs, lib, inputs, ... }:
 
+let
+  # Termius (Electron, aus Snap repackaged) laedt libGL.so.1 zur Laufzeit per
+  # dlopen -> findet es nicht ("Could not dlopen libGL.so.1"). autoPatchelf
+  # fasst dlopen nicht an. Fix: libglvnd (pkgs.libGL) + NVIDIA-Treiberpfad
+  # (/run/opengl-driver/lib) in den LD_LIBRARY_PATH des Wrappers; libGL
+  # zusaetzlich in buildInputs (falls eine .so es als DT_NEEDED braucht).
+  termius-fixed = pkgs.termius.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL ];
+    postFixup = ''
+      makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
+        "''${gappsWrapperArgs[@]}" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib"
+    '';
+  });
+in
 {
   # Unfree-Pakete erlauben (Claude Desktop, claude-code, NVIDIA-Treiber, ...)
   nixpkgs.config.allowUnfree = true;
@@ -180,7 +195,7 @@
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    termius           # SSH-Client
+    termius-fixed     # SSH-Client (mit libGL-Fix, siehe oben)
     antigravity       # Google Antigravity IDE
 
     # CLI-Tools
