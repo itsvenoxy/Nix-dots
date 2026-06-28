@@ -220,6 +220,7 @@ in
     # CLI-Tools
     helix
     tmux
+    yazi          # TUI-Dateimanager
     fastfetch
     duf
     gum
