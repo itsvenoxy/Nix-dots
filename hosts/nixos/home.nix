@@ -39,7 +39,7 @@ in
   # VS Code (stable) declarative: Extensions + Settings aus deiner Arch-Installation
   programs.vscode = {
     enable = true;
-    package = pkgs.vscode;
+    package = pkgs.vscodium;
 
     profiles.default = {
       extensions = with marketplace; [
@@ -49,7 +49,7 @@ in
         ms-azuretools.vscode-containers
         ms-python.debugpy
         ms-python.python
-        ms-python.vscode-pylance
+        detachhead.basedpyright   # Pylance-Ersatz (Open Source, laeuft auf VSCodium)
         ms-python.vscode-python-envs
         nichabosh.minimalist-dark
         pmndrs.pmndrs            # Poimandres-Theme
@@ -65,6 +65,8 @@ in
         "breadcrumbs.enabled" = false;
         "material-code.primaryColor" = "#4A5475";
         "claudeCode.preferredLocation" = "panel";
+        # basedpyright statt Pylance: ms-python's eigenen LSP abschalten
+        "python.languageServer" = "None";
       };
     };
   };
