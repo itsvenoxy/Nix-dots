@@ -219,6 +219,9 @@ in
     # Laufzeit-Abhaengigkeit fuer Hyprlands GUI-Dialoge (update/plugin/dialog).
     hyprland-qtutils
 
+    # Datei-Manager (Default fuer den fileManager-Keybind der Dots)
+    nautilus
+
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
     kdePackages.plasma-browser-integration
 
