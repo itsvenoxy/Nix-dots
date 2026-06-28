@@ -58,6 +58,17 @@ in
     };
   };
 
+  # Cursor-Theme der end-4/illogical-Dots (sonst Default/falscher Cursor).
+  # Setzt GTK, X11/XWayland und hyprcursor (Hyprland) auf einmal.
+  home.pointerCursor = {
+    name = "Bibata-Modern-Classic";
+    package = pkgs.bibata-cursors;
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+    hyprcursor.enable = true;
+  };
+
   # brave-origin als Standardbrowser (Desktop-Datei: brave-origin-beta.desktop)
   xdg.mimeApps = {
     enable = true;
