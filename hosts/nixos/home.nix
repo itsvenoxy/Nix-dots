@@ -1,9 +1,18 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 let
   # Alle Marketplace-Extensions als Nix-Pakete. Kommt aus dem Overlay
   # (siehe configuration.nix) -> respektiert nixpkgs.config.allowUnfree.
   marketplace = pkgs.vscode-marketplace;
+
+  # Monitor-Setup fuer die Lua-Config der Dots (hl.monitor aus hyprland/lib).
+  # Beide Panels 2560x1440; DP-4 (MSI MAG322CQR) mit 165 Hz, rechts neben
+  # DP-3 (MAG321CURV, 4K-Panel hier auf 1440p@60).
+  monitorsLua = ''
+    -- Monitore (von home-manager gesetzt, siehe home.nix)
+    hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",    scale = "1" })
+    hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "2560x0", scale = "1" })
+  '';
 in
 {
   imports = [
@@ -80,6 +89,12 @@ in
       "text/html" = "brave-origin-beta.desktop";
     };
   };
+
+  # Monitor-Config in die Lua-Dots schreiben, NACH deren Seeding (sonst
+  # ueberschreibt das Dots-Seeding custom/general.lua wieder).
+  home.activation.setMonitors = lib.hm.dag.entryAfter [ "copyIllogicalImpulseConfigs" ] ''
+    $DRY_RUN_CMD install -Dm644 ${pkgs.writeText "hypr-custom-general.lua" monitorsLua} "$HOME/.config/hypr/custom/general.lua"
+  '';
 
   programs.home-manager.enable = true;
 
