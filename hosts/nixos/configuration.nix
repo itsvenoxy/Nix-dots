@@ -212,6 +212,9 @@ in
     inetutils
     nano
 
+    # Laufzeit-Abhaengigkeit fuer Hyprlands GUI-Dialoge (update/plugin/dialog).
+    hyprland-qtutils
+
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
     kdePackages.plasma-browser-integration
 
