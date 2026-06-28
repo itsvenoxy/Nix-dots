@@ -102,9 +102,11 @@ in
   # Von den illogical-impulse Dots benoetigt (QtPositioning/Wetter etc.)
   services.geoclue2.enable = true;
 
-  # Fonts fuer die Dots (Material Symbols kommen aus dem Modul selbst)
+  # Fonts fuer die Dots. material-symbols = Icon-Font der end-4/illogical-
+  # impulse Shell; ohne sie erscheinen Icons als Text (z.B. "arrow_upward").
   fonts.packages = with pkgs; [
     rubik
+    material-symbols
     nerd-fonts.ubuntu
     nerd-fonts.jetbrains-mono
   ];
