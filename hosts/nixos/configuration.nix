@@ -17,30 +17,11 @@ let
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
         --set-default __GLX_VENDOR_LIBRARY_NAME nvidia \
-        --set-default GBM_BACKEND nvidia-drm
+        --set-default GBM_BACKEND nvidia-drm \
+        --set-default __NV_DISABLE_EXPLICIT_SYNC 1
     '';
   });
 
-  # Claude Desktop: k3d3-FHS-Variante neu gebaut. Upstream-FHS hat weder
-  # xdg-open noch einen Browser -> der OAuth-Login kann kein Browser-Fenster
-  # oeffnen ("kein Google-Fenster"). Fix: xdg-utils in die Sandbox + BROWSER
-  # auf brave-origin (per /nix-Mount aus der Sandbox erreichbar).
-  claude-desktop-fixed =
-    let cd = inputs.claude-desktop.packages.${pkgs.stdenv.hostPlatform.system}.claude-desktop;
-    in pkgs.buildFHSEnv {
-      name = "claude-desktop";
-      targetPkgs = p: with p; [ docker glibc openssl nodejs uv xdg-utils ];
-      runScript = "${cd}/bin/claude-desktop";
-      profile = ''
-        export BROWSER=${pkgs.brave-origin}/bin/brave-origin
-      '';
-      extraInstallCommands = ''
-        mkdir -p $out/share/applications
-        cp ${cd}/share/applications/claude.desktop $out/share/applications/
-        mkdir -p $out/share/icons
-        cp -r ${cd}/share/icons/* $out/share/icons/
-      '';
-    };
 in
 {
   # Unfree-Pakete erlauben (Claude Desktop, claude-code, NVIDIA-Treiber, ...)
@@ -259,11 +240,17 @@ in
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
     kdePackages.plasma-browser-integration
 
-    # Claude Desktop (FHS-Variante mit xdg-utils-Fix, siehe oben)
-    claude-desktop-fixed
-
+    # Claude Desktop kommt jetzt ueber programs.claude-desktop (Modul, siehe unten)
     # kitty/fish/starship liefert das illogical-impulse home-manager-Modul
   ];
+
+  # Claude Desktop (Reginleif88/claude-cowork-nix): aktuelle Version, Electron 41,
+  # Cowork + Claude-Code-Integration. claudeCodePackage verdrahtet das lokale
+  # "Code"-Feature (CLAUDE_CODE_LOCAL_BINARY) mit dem claude-code aus nixpkgs.
+  programs.claude-desktop = {
+    enable = true;
+    claudeCodePackage = pkgs.claude-code;
+  };
 
   # Flakes + neue Nix-Kommandos aktivieren
   nix.settings.experimental-features = [ "nix-command" "flakes" ];

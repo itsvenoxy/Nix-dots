@@ -1,23 +1,23 @@
 {
   "nodes": {
-    "claude-desktop": {
+    "claude-cowork-nix": {
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
-          "nixpkgs-claude"
+          "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1764098187,
-        "narHash": "sha256-H6JjWXhKqxZ8QLMoqndZx9e5x0Sv5AiipSmqvIxIbgo=",
-        "owner": "k3d3",
-        "repo": "claude-desktop-linux-flake",
-        "rev": "b2b040cb68231d2118906507d9cc8fd181ca6308",
+        "lastModified": 1781817281,
+        "narHash": "sha256-QFLdHh1b3chdpQb+kro3UjOoKosc9/86xh9uLx+PwKI=",
+        "owner": "Reginleif88",
+        "repo": "claude-cowork-nix",
+        "rev": "5018f7912405c1559314f56bc587ee6318d60132",
         "type": "github"
       },
       "original": {
-        "owner": "k3d3",
-        "repo": "claude-desktop-linux-flake",
+        "owner": "Reginleif88",
+        "repo": "claude-cowork-nix",
         "type": "github"
       }
     },
@@ -174,22 +174,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-claude": {
-      "locked": {
-        "lastModified": 1772495975,
-        "narHash": "sha256-t7aB7clBOmyTvyMYst+N0u4qzkMm+CnHvIBaLwcUCiQ=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "bcf5e671df4efb886d8f787ef8cb54e5867c749a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "bcf5e671df4efb886d8f787ef8cb54e5867c749a",
-        "type": "github"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -235,13 +219,12 @@
     },
     "root": {
       "inputs": {
-        "claude-desktop": "claude-desktop",
+        "claude-cowork-nix": "claude-cowork-nix",
         "home-manager": "home-manager",
         "illogical-flake": "illogical-flake",
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs",
         "nixpkgs-brave": "nixpkgs-brave",
-        "nixpkgs-claude": "nixpkgs-claude",
         "silentSDDM": "silentSDDM"
       }
     },

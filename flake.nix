@@ -31,18 +31,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Eigener nixpkgs-Snapshot NUR fuer claude-desktop: letzter nixos-unstable-
-    # Commit vor dem Entfernen von nodePackages (2026-03-03). claude-desktop
-    # (pkgs/claude-desktop.nix) nutzt nodePackages.asar; in aktuellem unstable
-    # wirft das "nodePackages has been removed". Upstream-HEAD ist noch nicht
-    # gefixt. Darum baut diese eine Leaf-App (FHS-Sandbox) gegen ein aelteres
-    # nixpkgs -> das System-nixpkgs bleibt unangetastet auf unstable.
-    nixpkgs-claude.url = "github:NixOS/nixpkgs/bcf5e671df4efb886d8f787ef8cb54e5867c749a";
-
-    # Claude Desktop fuer Linux (inoffizieller Build)
-    claude-desktop = {
-      url = "github:k3d3/claude-desktop-linux-flake";
-      inputs.nixpkgs.follows = "nixpkgs-claude";
+    # Claude Desktop fuer Linux. Reginleif88/claude-cowork-nix statt k3d3:
+    # aktuelle Version (Electron 41 -> behebt NVIDIA-Blank-Window), Cowork +
+    # Claude-Code-Integration (programs.claude-desktop, claudeCodePackage).
+    # Baut gegen aktuelle nixpkgs -> kein nixpkgs-claude-Pin mehr noetig.
+    claude-cowork-nix = {
+      url = "github:Reginleif88/claude-cowork-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # nixpkgs-Fork mit dem noch nicht gemergten brave-origin (PR #511131).
@@ -75,6 +70,7 @@
           ./hosts/nixos/hardware-configuration.nix
 
           inputs.silentSDDM.nixosModules.default
+          inputs.claude-cowork-nix.nixosModules.default
 
           home-manager.nixosModules.home-manager
           {
