@@ -207,6 +207,10 @@
   # Flakes + neue Nix-Kommandos aktivieren
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # fish aktivieren, damit environment.shellAliases auch in der fish-Shell
+  # greifen (die illogical-Dots starten fish im Terminal).
+  programs.fish.enable = true;
+
   # Praktische Aliase fuers Rebuilden (Config liegt unter /root/Nix-dots)
   environment.shellAliases = {
     nrs = "sudo nixos-rebuild switch --flake /root/Nix-dots#nixos --impure";

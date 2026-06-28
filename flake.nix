@@ -78,6 +78,10 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
+            # Bestehende, von HM nicht erzeugte Dateien (z.B. die beim ersten
+            # Start der illogical-Dots ins ~/.config geschriebenen Configs)
+            # sichern statt "would be clobbered"-Abbruch.
+            home-manager.backupFileExtension = "hmbak";
             home-manager.extraSpecialArgs = { inherit inputs; };
             home-manager.users.janis = import ./hosts/nixos/home.nix;
           }
