@@ -22,10 +22,9 @@
     };
 
     # end-4 / illogical-impulse Hyprland-Dots als home-manager-Modul (+ QuickShell).
-    # Fork hmk114: 24 Commits vor soymou (Terminal-Theming-/Wallpaper-Fixes,
-    # Dolphin), Stand 2026-06-27. Bewusst der Fork statt des Upstreams soymou.
+    # Upstream soymou (klassische .conf-Hyprland-Config).
     illogical-flake = {
-      url = "github:hmk114/illogical-flake";
+      url = "github:soymou/illogical-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
