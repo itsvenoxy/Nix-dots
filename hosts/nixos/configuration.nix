@@ -8,14 +8,16 @@ let
   # zusaetzlich in buildInputs (falls eine .so es als DT_NEEDED braucht).
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL ];
-    # libGL-Pfad fuer dlopen + GPU-Beschleunigung aus (Electron/Snap scheitert
-    # sonst an der GBM/Mesa-Init auf NVIDIA: "MESA-LOADER ... dri_gbm.so").
-    # Fuer einen SSH-Client ist HW-Beschleunigung unnoetig -> --disable-gpu.
+    # Electron/Snap auf NVIDIA: libGL.so.1 wird per dlopen geladen (LD_LIBRARY_
+    # PATH), und die GPU-Init muss den NVIDIA-GBM/GLX-Treiber nehmen statt am
+    # Mesa-"dri_gbm.so" zu scheitern -> sonst leeres/schwarzes Fenster.
+    # (--disable-gpu => Fenster bleibt leer, also NICHT verwenden.)
     postFixup = ''
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --add-flags "--disable-gpu"
+        --set-default __GLX_VENDOR_LIBRARY_NAME nvidia \
+        --set-default GBM_BACKEND nvidia-drm
     '';
   });
 
