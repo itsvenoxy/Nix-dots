@@ -14,6 +14,12 @@
         config.allowUnfree = true;
       }).brave-origin;
     })
+
+    # VS-Code-Marketplace als pkgs.vscode-marketplace.*. Ueber das Overlay (statt
+    # ueber den Flake-Output) werden die Extensions mit DIESEM pkgs gebaut, sodass
+    # nixpkgs.config.allowUnfree hier greift (sonst: "unfree license"-Fehler bei
+    # anthropic.claude-code). Kein NIXPKGS_ALLOW_UNFREE=1 mehr noetig.
+    inputs.nix-vscode-extensions.overlays.default
   ];
 
   # ---------------------------------------------------------------------------

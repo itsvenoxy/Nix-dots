@@ -1,8 +1,9 @@
 { config, pkgs, inputs, ... }:
 
 let
-  # Alle Marketplace-Extensions als Nix-Pakete
-  marketplace = inputs.nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace;
+  # Alle Marketplace-Extensions als Nix-Pakete. Kommt aus dem Overlay
+  # (siehe configuration.nix) -> respektiert nixpkgs.config.allowUnfree.
+  marketplace = pkgs.vscode-marketplace;
 in
 {
   imports = [
