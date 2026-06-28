@@ -57,6 +57,18 @@ in
     };
   };
 
+  # brave-origin als Standardbrowser (Desktop-Datei: brave-origin-beta.desktop)
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications = {
+      "x-scheme-handler/http" = "brave-origin-beta.desktop";
+      "x-scheme-handler/https" = "brave-origin-beta.desktop";
+      "x-scheme-handler/about" = "brave-origin-beta.desktop";
+      "x-scheme-handler/unknown" = "brave-origin-beta.desktop";
+      "text/html" = "brave-origin-beta.desktop";
+    };
+  };
+
   programs.home-manager.enable = true;
 
   # An die Version koppeln, mit der installiert wird

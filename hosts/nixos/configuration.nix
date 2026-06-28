@@ -1,12 +1,5 @@
 { config, pkgs, lib, inputs, ... }:
 
-let
-  # SDDM-Theme mit gewaehltem eingebettetem Look.
-  # Alternativen: "black_hole" "cyberpunk" "japanese_aesthetic" "jake_the_dog" "hyprland_kath" ...
-  sddm-astronaut = pkgs.sddm-astronaut.override {
-    embeddedTheme = "astronaut";
-  };
-in
 {
   # Unfree-Pakete erlauben (Claude Desktop, claude-code, NVIDIA-Treiber, ...)
   nixpkgs.config.allowUnfree = true;
@@ -85,12 +78,14 @@ in
   # Hyprland + SDDM (Wayland)
   # ---------------------------------------------------------------------------
   programs.hyprland.enable = true;
-  services.displayManager.sddm = {
+
+  # SilentSDDM Login-Theme (uiriansan/SilentSDDM) via dessen NixOS-Modul.
+  # Das Modul richtet SDDM komplett ein: Qt6-sddm, Theme "silent", die noetigen
+  # extraPackages und qtvirtualkeyboard-Settings. Ersetzt sddm-astronaut.
+  programs.silentSDDM = {
     enable = true;
-    wayland.enable = true;
-    package = pkgs.kdePackages.sddm;       # Qt6 (noetig fuer sddm-astronaut)
-    theme = "sddm-astronaut-theme";
-    extraPackages = [ sddm-astronaut ];
+    theme = "rei";   # weitere eingebaute Themes: configs/<name>.conf im SilentSDDM-Repo
+    # settings = { ... };  # Feintuning, siehe Modul-Beispiel / SilentSDDM-Wiki
   };
 
   # XDG-Portals (Screenshare, Datei-Dialoge etc.)
@@ -101,6 +96,24 @@ in
 
   # Von den illogical-impulse Dots benoetigt (QtPositioning/Wetter etc.)
   services.geoclue2.enable = true;
+
+  # ---------------------------------------------------------------------------
+  # Brave: Extensions deklarativ erzwingen (Managed Policy) + Plasma-Host
+  # ---------------------------------------------------------------------------
+  # Force-Install via Chrome-Web-Store-Update-URL. Hinweis: brave-origin ist ein
+  # Fork ("brave-origin-beta"); falls der einen anderen Policy-Pfad als
+  # /etc/brave nutzt, einfach manuell aus dem Store nachinstallieren.
+  environment.etc."brave/policies/managed/extensions.json".text = builtins.toJSON {
+    ExtensionInstallForcelist = [
+      "ghmbeldphafepmbegfdlkpapadhbakde;https://clients2.google.com/service/update2/crx"  # Proton Pass
+      "cimiefiiaegbelhefglklhhakcgmhkai;https://clients2.google.com/service/update2/crx"  # Plasma Integration
+    ];
+  };
+
+  # Native-Messaging-Host, damit die Plasma-Integration-Extension wirklich
+  # funktioniert (u.a. Browser-Medien -> MPRIS -> illogical-impulse Media-Widget).
+  environment.etc."brave/native-messaging-hosts/org.kde.plasma.browser_integration.json".source =
+    "${pkgs.kdePackages.plasma-browser-integration}/etc/chromium/native-messaging-hosts/org.kde.plasma.browser_integration.json";
 
   # Fonts fuer die Dots. material-symbols = Icon-Font der end-4/illogical-
   # impulse Shell; ohne sie erscheinen Icons als Text (z.B. "arrow_upward").
@@ -176,8 +189,8 @@ in
     inetutils
     nano
 
-    # SDDM-Theme (auch im Environment, damit der sddm-greeter es findet)
-    sddm-astronaut
+    # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
+    kdePackages.plasma-browser-integration
 
     # Claude Desktop (FHS-Variante -> MCP-Server via npx/uvx/docker nutzbar)
     inputs.claude-desktop.packages.${pkgs.system}.claude-desktop-with-fhs

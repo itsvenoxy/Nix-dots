@@ -241,7 +241,28 @@
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs",
         "nixpkgs-brave": "nixpkgs-brave",
-        "nixpkgs-claude": "nixpkgs-claude"
+        "nixpkgs-claude": "nixpkgs-claude",
+        "silentSDDM": "silentSDDM"
+      }
+    },
+    "silentSDDM": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782613322,
+        "narHash": "sha256-rDFls2ex7YJn6deFgsZak7VaNFuC3nF32S8DIxn3Egc=",
+        "owner": "uiriansan",
+        "repo": "SilentSDDM",
+        "rev": "3948ebe941c03a32a10a74e9bce10c2e267c888a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "uiriansan",
+        "repo": "SilentSDDM",
+        "type": "github"
       }
     },
     "systems": {

@@ -50,6 +50,13 @@
       url = "github:nix-community/nix-vscode-extensions";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # SilentSDDM Login-Theme (ersetzt sddm-astronaut). Liefert ein NixOS-Modul,
+    # das SDDM komplett einrichtet (siehe programs.silentSDDM in configuration.nix).
+    silentSDDM = {
+      url = "github:uiriansan/SilentSDDM";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
@@ -62,6 +69,8 @@
         modules = [
           ./hosts/nixos/configuration.nix
           ./hosts/nixos/hardware-configuration.nix
+
+          inputs.silentSDDM.nixosModules.default
 
           home-manager.nixosModules.home-manager
           {
