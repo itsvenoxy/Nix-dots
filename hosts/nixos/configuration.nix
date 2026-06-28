@@ -90,7 +90,9 @@
   # extraPackages und qtvirtualkeyboard-Settings. Ersetzt sddm-astronaut.
   programs.silentSDDM = {
     enable = true;
-    theme = "rei";   # weitere eingebaute Themes: configs/<name>.conf im SilentSDDM-Repo
+    # Themes: default default-left default-right rei ken silvia everforest
+    #         gruvbox nord catppuccin-{mocha,macchiato,frappe,latte}
+    theme = "default";
     # settings = { ... };  # Feintuning, siehe Modul-Beispiel / SilentSDDM-Wiki
   };
 
