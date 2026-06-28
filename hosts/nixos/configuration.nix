@@ -22,6 +22,19 @@ let
     '';
   });
 
+  # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
+  # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
+  # (OAuth-Ruecksprung nach dem Login).
+  claude-desktop-launcher = pkgs.makeDesktopItem {
+    name = "claude-desktop";
+    desktopName = "Claude";
+    comment = "Claude Desktop";
+    exec = "claude-desktop %U";
+    icon = "claude-desktop";
+    categories = [ "Network" "Utility" ];
+    startupWMClass = "Claude";
+    mimeTypes = [ "x-scheme-handler/claude" ];
+  };
 in
 {
   # Unfree-Pakete erlauben (Claude Desktop, claude-code, NVIDIA-Treiber, ...)
@@ -241,7 +254,9 @@ in
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
     kdePackages.plasma-browser-integration
 
-    # Claude Desktop kommt jetzt ueber programs.claude-desktop (Modul, siehe unten)
+    # Claude Desktop kommt ueber programs.claude-desktop (Modul, siehe unten);
+    # der Launcher-Eintrag fehlt im Paket -> selbst gebaut:
+    claude-desktop-launcher
     # kitty/fish/starship liefert das illogical-impulse home-manager-Modul
   ];
 
