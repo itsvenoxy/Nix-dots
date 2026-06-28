@@ -213,13 +213,13 @@
   # greifen (die illogical-Dots starten fish im Terminal).
   programs.fish.enable = true;
 
-  # Praktische Aliase fuers Rebuilden (Config liegt unter /root/Nix-dots)
+  # Praktische Aliase fuers Rebuilden (Config liegt unter /home/janis/Nix-dots)
   environment.shellAliases = {
-    nrs = "sudo nixos-rebuild switch --flake /root/Nix-dots#nixos --impure";
-    nrt = "sudo nixos-rebuild test   --flake /root/Nix-dots#nixos --impure";
-    nrb = "sudo nixos-rebuild boot   --flake /root/Nix-dots#nixos --impure";
+    nrs = "sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos --impure";
+    nrt = "sudo nixos-rebuild test   --flake /home/janis/Nix-dots#nixos --impure";
+    nrb = "sudo nixos-rebuild boot   --flake /home/janis/Nix-dots#nixos --impure";
     # erst neueste Config ziehen, dann switchen
-    nixup = "sudo git -C /root/Nix-dots pull origin main && sudo nixos-rebuild switch --flake /root/Nix-dots#nixos --impure";
+    nixup = "git -C /home/janis/Nix-dots pull origin main && sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos --impure";
   };
 
   # sudo fuer wheel ohne extra Config
