@@ -169,6 +169,17 @@ in
   # ---------------------------------------------------------------------------
   hardware.bluetooth.enable = true;
 
+  # ---------------------------------------------------------------------------
+  # Steam (FHS-Env + udev fuer Controller). 32-Bit-Grafik ist via
+  # hardware.graphics.enable32Bit oben schon aktiv (Pflicht fuer Steam/Proton).
+  # ---------------------------------------------------------------------------
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;        # Ports fuer Remote Play / Streaming
+    dedicatedServer.openFirewall = false;  # nur fuer eigene Game-Server noetig
+  };
+  programs.gamemode.enable = true;         # Feral GameMode -> bessere Performance
+
   # ZRAM als Swap (wie auf Arch)
   zramSwap.enable = true;
 
