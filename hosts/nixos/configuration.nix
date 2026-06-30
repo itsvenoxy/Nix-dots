@@ -1,16 +1,16 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron) zeigt auf NVIDIA + Hyprland ein schwarzes Fenster. Echte
-  # Ursache (nach langer Diagnose): das "Permission denied" beim GBM-Zugriff
-  # (dri_gbm.so / DRM_IOCTL_MODE_CREATE_DUMB) ist ein *echtes* Rechteproblem am
-  # GPU-Render-Node /dev/dri/renderD128 (Gruppe `render`, 0666) -> der User muss
-  # in der Gruppe `render` sein (siehe users.users.janis.extraGroups unten).
-  # XWayland (--ozone-platform=x11) war zusaetzlich der falsche Pfad: auf NVIDIA
-  # rendert Electron dort schwarz (fehlender Explicit Sync). Daher hier KEINE
-  # ozone/disable-gpu-Flags mehr -> natives Wayland (Session: NIXOS_OZONE_WL=1)
-  # mit GPU + Explicit Sync. --no-sandbox bleibt (chrome-sandbox der AppImage-
-  # Paketierung ist nicht eingerichtet). libGL fuer den libGL.so.1-dlopen.
+  # Termius (Electron) zeigt auf diesem HYBRID-System (Intel UHD 770 + NVIDIA
+  # RTX 4090) ein schwarzes Fenster. Echte Ursache (Tiefenrecherche): Mesa laedt
+  # fuer Termius den FALSCHEN GBM-Backend -> versucht den Mesa/Intel-Pfad
+  # (dri_gbm.so) auf der NVIDIA-Karte und scheitert ("failed to open dri ...
+  # Permission denied", DRM_IOCTL_MODE_CREATE_DUMB Permission denied). Fix:
+  # Termius gezielt den NVIDIA-GBM-Backend (nvidia-drm_gbm.so) vorgeben.
+  # WICHTIG: nur pro-App setzen, NICHT global -> global crasht GBM_BACKEND=
+  # nvidia-drm Hyprland auf Hybrid-Systemen (Hyprland #4274). --no-sandbox +
+  # --disable-gpu-sandbox gegen den Chromium-GPU-Sandbox-Pfad. Natives Wayland
+  # (Session: NIXOS_OZONE_WL=1). libGL fuer den libGL.so.1-dlopen.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -19,7 +19,10 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --add-flags "--no-sandbox"
+        --set GBM_BACKEND nvidia-drm \
+        --set __GLX_VENDOR_LIBRARY_NAME nvidia \
+        --add-flags "--no-sandbox" \
+        --add-flags "--disable-gpu-sandbox"
     '';
   });
 
