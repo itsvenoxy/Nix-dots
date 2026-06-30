@@ -101,6 +101,11 @@ in
     description = "Janis";
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     shell = pkgs.bash;
+    # subuid/subgid-Bereiche fuer rootless Podman/Distrobox. Ohne die scheitert
+    # `distrobox enter` mit "unable to find user janis: no matching entries in
+    # passwd file", weil der Container den User nicht mappen kann.
+    subUidRanges = [ { startUid = 100000; count = 65536; } ];
+    subGidRanges = [ { startGid = 100000; count = 65536; } ];
   };
 
   # ---------------------------------------------------------------------------
