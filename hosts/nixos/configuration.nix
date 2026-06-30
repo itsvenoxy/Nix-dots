@@ -7,7 +7,11 @@ let
   # (/run/opengl-driver/lib) in den LD_LIBRARY_PATH des Wrappers; libGL
   # zusaetzlich in buildInputs (falls eine .so es als DT_NEEDED braucht).
   termius-fixed = pkgs.termius.overrideAttrs (old: {
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL ];
+    # libGL (s.u.) + sqlite: libsoftokn3 (NSS) zieht libsqlite3.so.0; bei
+    # manchen Versionen bricht autoPatchelf sonst ab (nixpkgs #438763).
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
+    autoPatchelfIgnoreMissingDeps =
+      (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
     # Electron/Snap auf NVIDIA: libGL.so.1 wird per dlopen geladen (LD_LIBRARY_
     # PATH), und die GPU-Init muss den NVIDIA-GBM/GLX-Treiber nehmen statt am
     # Mesa-"dri_gbm.so" zu scheitern -> sonst leeres/schwarzes Fenster.
