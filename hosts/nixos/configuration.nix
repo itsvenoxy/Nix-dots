@@ -201,6 +201,20 @@ in
   };
   programs.gamemode.enable = true;         # Feral GameMode -> bessere Performance
 
+  # ---------------------------------------------------------------------------
+  # Podman + Distrobox: fuer Apps, die auf nativem NixOS nicht laufen.
+  # Termius (Electron) rendert auf NixOS mit mesa>=24.3 nur ein schwarzes
+  # Fenster (gebuendelte alte libgbm, ABI-Mismatch; alle Software-Flags
+  # erfolglos getestet). In einem Ubuntu-24.04-Distrobox passt die Mesa-Version
+  # zur App -> Termius laeuft wie unter Arch und wird per distrobox-export in
+  # den Host-Launcher gebracht. NVIDIA via `distrobox create --nvidia`.
+  # ---------------------------------------------------------------------------
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = true;                   # `docker`-CLI zeigt auf podman
+    defaultNetwork.settings.dns_enabled = true;
+  };
+
   # ZRAM als Swap (wie auf Arch)
   zramSwap.enable = true;
 
@@ -212,6 +226,7 @@ in
     vim
     wget
     curl
+    distrobox         # Ubuntu-Container fuer Termius (s. virtualisation.podman)
     pavucontrol
     spotifyd
     htop
