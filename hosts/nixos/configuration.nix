@@ -1,16 +1,14 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron) zeigt auf diesem HYBRID-System (Intel UHD 770 + NVIDIA
-  # RTX 4090) ein schwarzes Fenster. Echte Ursache (Tiefenrecherche): Mesa laedt
-  # fuer Termius den FALSCHEN GBM-Backend -> versucht den Mesa/Intel-Pfad
-  # (dri_gbm.so) auf der NVIDIA-Karte und scheitert ("failed to open dri ...
-  # Permission denied", DRM_IOCTL_MODE_CREATE_DUMB Permission denied). Fix:
-  # Termius gezielt den NVIDIA-GBM-Backend (nvidia-drm_gbm.so) vorgeben.
-  # WICHTIG: nur pro-App setzen, NICHT global -> global crasht GBM_BACKEND=
-  # nvidia-drm Hyprland auf Hybrid-Systemen (Hyprland #4274). --no-sandbox +
-  # --disable-gpu-sandbox gegen den Chromium-GPU-Sandbox-Pfad. Natives Wayland
-  # (Session: NIXOS_OZONE_WL=1). libGL fuer den libGL.so.1-dlopen.
+  # Termius (Electron) rendert auf Hyprland/Wayland + NVIDIA partout ein
+  # schwarzes Fenster (umfangreich diagnostiziert: GBM-Fehler liess sich mit
+  # GBM_BACKEND=nvidia-drm beseitigen, aber das Bild kommt nie an den
+  # Compositor -> bekannte NVIDIA/Wayland-Electron-Inkompatibilitaet, nativ wie
+  # im Container). Loesung: Termius in der X11/Xorg-Session (Plasma) starten,
+  # dort rendert es normal (NVIDIA + Xorg ist stabil). Darum hier KEINE
+  # Wayland/GBM-Flags mehr -> der Wrapper laesst Electron unter X11 einfach den
+  # XCB-Pfad nehmen. --no-sandbox: chrome-sandbox der Paketierung nicht gesetzt.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -19,14 +17,7 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --set GBM_BACKEND nvidia-drm \
-        --set __GLX_VENDOR_LIBRARY_NAME nvidia \
-        --add-flags "--ozone-platform=wayland" \
-        --add-flags "--enable-features=WaylandLinuxDrmSyncobj" \
-        --add-flags "--use-gl=angle" \
-        --add-flags "--use-angle=gl" \
-        --add-flags "--no-sandbox" \
-        --add-flags "--disable-gpu-sandbox"
+        --add-flags "--no-sandbox"
     '';
   });
 
@@ -144,6 +135,16 @@ in
     theme = "default";
     # settings = { ... };  # Feintuning, siehe Modul-Beispiel / SilentSDDM-Wiki
   };
+
+  # ---------------------------------------------------------------------------
+  # Zusaetzliche X11/Xorg-Session (KDE Plasma) NEBEN Hyprland. Zweck: Apps, die
+  # auf Wayland/NVIDIA nicht rendern (v.a. Termius), laufen unter Xorg stabil.
+  # Im SDDM-Login unten die Session auf "Plasma (X11)" umschalten, sonst bleibt
+  # Hyprland der Standard (defaultSession). NVIDIA-Xorg via videoDrivers oben.
+  # ---------------------------------------------------------------------------
+  services.xserver.enable = true;                 # Xorg fuer die X11-Session
+  services.desktopManager.plasma6.enable = true;  # liefert die "Plasma (X11)"-Session
+  services.displayManager.defaultSession = "hyprland";  # Hyprland bleibt Default
 
   # XDG-Portals (Screenshare, Datei-Dialoge etc.)
   xdg.portal = {
