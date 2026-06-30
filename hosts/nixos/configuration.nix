@@ -205,17 +205,23 @@ in
 
   # ---------------------------------------------------------------------------
   # Podman + Distrobox: fuer Apps, die auf nativem NixOS nicht laufen.
-  # Termius (Electron) rendert auf NixOS mit mesa>=24.3 nur ein schwarzes
-  # Fenster (gebuendelte alte libgbm, ABI-Mismatch; alle Software-Flags
-  # erfolglos getestet). In einem Ubuntu-24.04-Distrobox passt die Mesa-Version
-  # zur App -> Termius laeuft wie unter Arch und wird per distrobox-export in
-  # den Host-Launcher gebracht. NVIDIA via `distrobox create --nvidia`.
+  # Termius (Electron) rendert auf NixOS nativ nur ein schwarzes Fenster. In
+  # einem Ubuntu-24.04-Distrobox mit funktionierender GPU laeuft Termius 9.40.1
+  # wie unter Arch und wird per distrobox-export in den Host-Launcher gebracht.
   # ---------------------------------------------------------------------------
   virtualisation.podman = {
     enable = true;
     dockerCompat = true;                   # `docker`-CLI zeigt auf podman
     defaultNetwork.settings.dns_enabled = true;
   };
+
+  # NVIDIA-GPU im Container. `distrobox --nvidia` funktioniert auf NixOS NICHT
+  # (es sucht die Treiber an FHS-Pfaden, die NixOS nicht hat -> im Container
+  # "libEGL: failed to create dri2 screen, driver (null)" -> schwarz). Richtig
+  # ist das nvidia-container-toolkit mit CDI: NixOS generiert beim Boot eine
+  # CDI-Spec (/var/run/cdi), und der Container bekommt die GPU ueber
+  # `--device nvidia.com/gpu=all` korrekt durchgereicht.
+  hardware.nvidia-container-toolkit.enable = true;
 
   # ZRAM als Swap (wie auf Arch)
   zramSwap.enable = true;
