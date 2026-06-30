@@ -1,11 +1,14 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Snap/Electron) findet libGL.so.1 nicht (dlopen) und scheitert auf
-  # NVIDIA an der Hardware-GBM-Init ("nvidia-drm_gbm.so: Permission denied") ->
-  # schwarzes Fenster. Loesung: libGL bereitstellen UND Mesa per
-  # LIBGL_ALWAYS_SOFTWARE=1 in reines Software-Rendering (llvmpipe) zwingen,
-  # damit der kaputte Hardware-GBM-Pfad gar nicht erst angefasst wird.
+  # Termius (Electron) zeigt auf NVIDIA + mesa>=24.3 ein schwarzes Fenster:
+  # die gebuendelte alte libgbm (<24.3) kann die System-GBM-Backends
+  # (dri_gbm.so / nvidia-drm_gbm.so, ABI seit Mesa 24.3 geaendert) nicht laden
+  # -> "MESA-LOADER ... dri_gbm.so: Permission denied". Es gibt KEINEN
+  # alternativen/inoffiziellen Termius-Flake (alle bauen dieselbe Binary).
+  # Einziger funktionierender Hebel: Electron die GPU komplett verbieten, dann
+  # wird GBM gar nicht initialisiert. --use-gl=disabled + --disable-gpu* zwingt
+  # reines Software-Rendering ueber den CPU-Pfad (langsamer, aber sichtbar).
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -14,6 +17,10 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
+        --add-flags "--disable-gpu" \
+        --add-flags "--disable-gpu-compositing" \
+        --add-flags "--in-process-gpu" \
+        --add-flags "--use-gl=disabled" \
         --set-default LIBGL_ALWAYS_SOFTWARE 1 \
         --set-default GALLIUM_DRIVER llvmpipe
     '';
