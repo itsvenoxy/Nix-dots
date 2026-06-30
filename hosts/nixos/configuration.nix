@@ -1,31 +1,6 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron, aus Snap repackaged) laedt libGL.so.1 zur Laufzeit per
-  # dlopen -> findet es nicht ("Could not dlopen libGL.so.1"). autoPatchelf
-  # fasst dlopen nicht an. Fix: libglvnd (pkgs.libGL) + NVIDIA-Treiberpfad
-  # (/run/opengl-driver/lib) in den LD_LIBRARY_PATH des Wrappers; libGL
-  # zusaetzlich in buildInputs (falls eine .so es als DT_NEEDED braucht).
-  termius-fixed = pkgs.termius.overrideAttrs (old: {
-    # libGL (s.u.) + sqlite: libsoftokn3 (NSS) zieht libsqlite3.so.0; bei
-    # manchen Versionen bricht autoPatchelf sonst ab (nixpkgs #438763).
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
-    autoPatchelfIgnoreMissingDeps =
-      (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
-    # Electron/Snap auf NVIDIA: libGL.so.1 wird per dlopen geladen (LD_LIBRARY_
-    # PATH), und die GPU-Init muss den NVIDIA-GBM/GLX-Treiber nehmen statt am
-    # Mesa-"dri_gbm.so" zu scheitern -> sonst leeres/schwarzes Fenster.
-    # (--disable-gpu => Fenster bleibt leer, also NICHT verwenden.)
-    postFixup = ''
-      makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
-        "''${gappsWrapperArgs[@]}" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --set-default __GLX_VENDOR_LIBRARY_NAME nvidia \
-        --set-default GBM_BACKEND nvidia-drm \
-        --set-default __NV_DISABLE_EXPLICIT_SYNC 1
-    '';
-  });
-
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
   # (OAuth-Ruecksprung nach dem Login).
@@ -231,7 +206,10 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    termius-fixed     # SSH-Client (mit libGL-Fix, siehe oben)
+    # SSH: Termius (Snap/Electron) rendert auf NVIDIA nur ein schwarzes Fenster
+    # und ist nicht zu retten -> native Alternativen:
+    sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
+    wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
 
     # CLI-Tools
