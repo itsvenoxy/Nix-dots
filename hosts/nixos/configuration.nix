@@ -1,15 +1,16 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron) zeigt auf NVIDIA + Hyprland ein schwarzes/leeres Fenster.
-  # Zwei Probleme uebereinander: (1) die Session setzt NIXOS_OZONE_WL=1 ->
-  # Electron rendert nativ ueber Wayland (auf NVIDIA unzuverlaessig); (2) der
-  # GPU-Prozess probt GBM und scheitert an der gebuendelten alten libgbm
-  # ("dri_gbm.so: Permission denied", ABI-Mismatch vs. System-mesa>=24.3).
-  # Fix (NixOS Discourse "electron apps work only with --disable-gpu"): auf
-  # XWayland zwingen UND den GPU-Prozess abschalten -> Software-Rendering, kein
-  # GBM-Probe. Nur --disable-gpu (NICHT --use-gl=disabled/--in-process-gpu,
-  # die machen das Fenster unsichtbar). libGL bleibt im Pfad fuer libGL.so.1.
+  # Termius (Electron) zeigt auf NVIDIA + Hyprland ein schwarzes Fenster. Echte
+  # Ursache (nach langer Diagnose): das "Permission denied" beim GBM-Zugriff
+  # (dri_gbm.so / DRM_IOCTL_MODE_CREATE_DUMB) ist ein *echtes* Rechteproblem am
+  # GPU-Render-Node /dev/dri/renderD128 (Gruppe `render`, 0666) -> der User muss
+  # in der Gruppe `render` sein (siehe users.users.janis.extraGroups unten).
+  # XWayland (--ozone-platform=x11) war zusaetzlich der falsche Pfad: auf NVIDIA
+  # rendert Electron dort schwarz (fehlender Explicit Sync). Daher hier KEINE
+  # ozone/disable-gpu-Flags mehr -> natives Wayland (Session: NIXOS_OZONE_WL=1)
+  # mit GPU + Explicit Sync. --no-sandbox bleibt (chrome-sandbox der AppImage-
+  # Paketierung ist nicht eingerichtet). libGL fuer den libGL.so.1-dlopen.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -18,10 +19,6 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --unset NIXOS_OZONE_WL \
-        --unset ELECTRON_OZONE_PLATFORM_HINT \
-        --add-flags "--ozone-platform=x11" \
-        --add-flags "--disable-gpu" \
         --add-flags "--no-sandbox"
     '';
   });
@@ -99,7 +96,7 @@ in
   users.users.janis = {
     isNormalUser = true;
     description = "Janis";
-    extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" "render" ];
     shell = pkgs.bash;
     # subuid/subgid-Bereiche fuer rootless Podman/Distrobox. Ohne die scheitert
     # `distrobox enter` mit "unable to find user janis: no matching entries in
