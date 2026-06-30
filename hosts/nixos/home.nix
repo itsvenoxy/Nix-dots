@@ -12,7 +12,7 @@ let
   # Beide haben so logisch 2560x1440 -> gleiche Groesse, nahtloser Uebergang.
   monitorsLua = ''
     -- Monitore (von home-manager gesetzt, siehe home.nix)
-    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",  scale = "1.5" })
+    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",  scale = "1.6" })
     -- DP-4 per "auto" automatisch buendig rechts an DP-3 haengen -> egal welche
     -- Skalierung DP-3 am Ende faehrt (1.5 oder das von Hyprland erzwungene 1.6),
     -- es gibt keine Ueberlappung/Luecke und die Maus wechselt sauber rueber.
