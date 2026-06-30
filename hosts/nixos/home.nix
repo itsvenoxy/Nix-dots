@@ -12,8 +12,11 @@ let
   # Beide haben so logisch 2560x1440 -> gleiche Groesse, nahtloser Uebergang.
   monitorsLua = ''
     -- Monitore (von home-manager gesetzt, siehe home.nix)
-    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",    scale = "1" })
-    hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "3840x0", scale = "1" })
+    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",  scale = "1.5" })
+    -- DP-4 per "auto" automatisch buendig rechts an DP-3 haengen -> egal welche
+    -- Skalierung DP-3 am Ende faehrt (1.5 oder das von Hyprland erzwungene 1.6),
+    -- es gibt keine Ueberlappung/Luecke und die Maus wechselt sauber rueber.
+    hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "auto", scale = "1" })
 
     -- Termius (Electron/XWayland) oeffnete getilet/klein auf einem Nebenworkspace
     -- und war so quasi unsichtbar. Diese Regel zwingt es zu einem grossen,
