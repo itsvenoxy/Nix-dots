@@ -2,13 +2,14 @@
 
 let
   # Termius (Electron) zeigt auf NVIDIA + Hyprland ein schwarzes/leeres Fenster.
-  # Echte Ursache: die Session setzt NIXOS_OZONE_WL=1 -> Electron rendert nativ
-  # ueber Wayland, was auf NVIDIA unzuverlaessig ist (leeres Fenster + die
-  # irrefuehrenden "dri_gbm.so: Permission denied"-Meldungen aus dem Wayland-
-  # GBM-Pfad). Dokumentierter Fix (NixOS Discourse): Electron auf XWayland (X11)
-  # zwingen, dann laeuft es MIT GPU stabil. Wir machen das nur fuer Termius
-  # (NIXOS_OZONE_WL leeren + --ozone-platform=x11), statt Wayland global
-  # abzuschalten. libGL bleibt im Pfad fuer den dlopen von libGL.so.1.
+  # Zwei Probleme uebereinander: (1) die Session setzt NIXOS_OZONE_WL=1 ->
+  # Electron rendert nativ ueber Wayland (auf NVIDIA unzuverlaessig); (2) der
+  # GPU-Prozess probt GBM und scheitert an der gebuendelten alten libgbm
+  # ("dri_gbm.so: Permission denied", ABI-Mismatch vs. System-mesa>=24.3).
+  # Fix (NixOS Discourse "electron apps work only with --disable-gpu"): auf
+  # XWayland zwingen UND den GPU-Prozess abschalten -> Software-Rendering, kein
+  # GBM-Probe. Nur --disable-gpu (NICHT --use-gl=disabled/--in-process-gpu,
+  # die machen das Fenster unsichtbar). libGL bleibt im Pfad fuer libGL.so.1.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -19,7 +20,8 @@ let
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
         --unset NIXOS_OZONE_WL \
         --unset ELECTRON_OZONE_PLATFORM_HINT \
-        --add-flags "--ozone-platform=x11"
+        --add-flags "--ozone-platform=x11" \
+        --add-flags "--disable-gpu"
     '';
   });
 
