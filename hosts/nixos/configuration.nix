@@ -21,7 +21,10 @@ let
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
         --set GBM_BACKEND nvidia-drm \
         --set __GLX_VENDOR_LIBRARY_NAME nvidia \
-        --add-flags "--in-process-gpu" \
+        --add-flags "--ozone-platform=wayland" \
+        --add-flags "--enable-features=WaylandLinuxDrmSyncobj" \
+        --add-flags "--use-gl=angle" \
+        --add-flags "--use-angle=gl" \
         --add-flags "--no-sandbox" \
         --add-flags "--disable-gpu-sandbox"
     '';
