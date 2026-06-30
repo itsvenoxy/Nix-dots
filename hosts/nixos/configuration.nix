@@ -1,6 +1,24 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
+  # Termius (Snap/Electron) findet libGL.so.1 nicht (dlopen) und scheitert auf
+  # NVIDIA an der Hardware-GBM-Init ("nvidia-drm_gbm.so: Permission denied") ->
+  # schwarzes Fenster. Loesung: libGL bereitstellen UND Mesa per
+  # LIBGL_ALWAYS_SOFTWARE=1 in reines Software-Rendering (llvmpipe) zwingen,
+  # damit der kaputte Hardware-GBM-Pfad gar nicht erst angefasst wird.
+  termius-fixed = pkgs.termius.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
+    autoPatchelfIgnoreMissingDeps =
+      (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
+    postFixup = ''
+      makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
+        "''${gappsWrapperArgs[@]}" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
+        --set-default LIBGL_ALWAYS_SOFTWARE 1 \
+        --set-default GALLIUM_DRIVER llvmpipe
+    '';
+  });
+
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
   # (OAuth-Ruecksprung nach dem Login).
@@ -206,8 +224,8 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    # SSH: Termius (Snap/Electron) rendert auf NVIDIA nur ein schwarzes Fenster
-    # und ist nicht zu retten -> native Alternativen:
+    termius-fixed     # SSH-Client (Wrapper: libGL + Software-Rendering, s.o.)
+    # native SSH-Alternativen als Fallback (falls Termius zickt):
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
