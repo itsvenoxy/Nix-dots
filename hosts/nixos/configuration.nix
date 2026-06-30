@@ -1,14 +1,14 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron) zeigt auf NVIDIA + mesa>=24.3 ein schwarzes Fenster:
-  # die gebuendelte alte libgbm (<24.3) kann die System-GBM-Backends
-  # (dri_gbm.so / nvidia-drm_gbm.so, ABI seit Mesa 24.3 geaendert) nicht laden
-  # -> "MESA-LOADER ... dri_gbm.so: Permission denied". Es gibt KEINEN
-  # alternativen/inoffiziellen Termius-Flake (alle bauen dieselbe Binary).
-  # Einziger funktionierender Hebel: Electron die GPU komplett verbieten, dann
-  # wird GBM gar nicht initialisiert. --use-gl=disabled + --disable-gpu* zwingt
-  # reines Software-Rendering ueber den CPU-Pfad (langsamer, aber sichtbar).
+  # Termius (Electron) zeigt auf NVIDIA + Hyprland ein schwarzes/leeres Fenster.
+  # Echte Ursache: die Session setzt NIXOS_OZONE_WL=1 -> Electron rendert nativ
+  # ueber Wayland, was auf NVIDIA unzuverlaessig ist (leeres Fenster + die
+  # irrefuehrenden "dri_gbm.so: Permission denied"-Meldungen aus dem Wayland-
+  # GBM-Pfad). Dokumentierter Fix (NixOS Discourse): Electron auf XWayland (X11)
+  # zwingen, dann laeuft es MIT GPU stabil. Wir machen das nur fuer Termius
+  # (NIXOS_OZONE_WL leeren + --ozone-platform=x11), statt Wayland global
+  # abzuschalten. libGL bleibt im Pfad fuer den dlopen von libGL.so.1.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -17,12 +17,9 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --add-flags "--disable-gpu" \
-        --add-flags "--disable-gpu-compositing" \
-        --add-flags "--in-process-gpu" \
-        --add-flags "--use-gl=disabled" \
-        --set-default LIBGL_ALWAYS_SOFTWARE 1 \
-        --set-default GALLIUM_DRIVER llvmpipe
+        --unset NIXOS_OZONE_WL \
+        --unset ELECTRON_OZONE_PLATFORM_HINT \
+        --add-flags "--ozone-platform=x11"
     '';
   });
 
