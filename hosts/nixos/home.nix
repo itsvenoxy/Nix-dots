@@ -12,10 +12,10 @@ let
   # Beide haben so logisch 2560x1440 -> gleiche Groesse, nahtloser Uebergang.
   monitorsLua = ''
     -- Monitore (von home-manager gesetzt, siehe home.nix)
-    hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",  scale = "1.6" })
-    -- DP-4 per "auto" automatisch buendig rechts an DP-3 haengen -> egal welche
-    -- Skalierung DP-3 am Ende faehrt (1.5 oder das von Hyprland erzwungene 1.6),
-    -- es gibt keine Ueberlappung/Luecke und die Maus wechselt sauber rueber.
+    -- BEIDE Monitore sind native 2560x1440 (DP-3 = MAG321CURV @60Hz,
+    -- DP-4 = MSI MAG322CQR @165Hz) -> keine Skalierung noetig, beide scale 1,
+    -- damit die UI auf beiden gleich gross ist. DP-4 per "auto" buendig rechts.
+    hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",  scale = "1" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "auto", scale = "1" })
 
     -- Termius (Electron/XWayland) oeffnete getilet/klein auf einem Nebenworkspace
