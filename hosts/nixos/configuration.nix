@@ -21,7 +21,8 @@ let
         --unset NIXOS_OZONE_WL \
         --unset ELECTRON_OZONE_PLATFORM_HINT \
         --add-flags "--ozone-platform=x11" \
-        --add-flags "--disable-gpu"
+        --add-flags "--disable-gpu" \
+        --add-flags "--no-sandbox"
     '';
   });
 
