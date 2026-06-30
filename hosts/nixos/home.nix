@@ -14,6 +14,11 @@ let
     -- Monitore (von home-manager gesetzt, siehe home.nix)
     hl.monitor({ output = "DP-3", mode = "3840x2160@60",  position = "0x0",    scale = "1.5" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "2560x0", scale = "1" })
+
+    -- Termius (Electron/XWayland) oeffnete getilet/klein auf einem Nebenworkspace
+    -- und war so quasi unsichtbar. Diese Regel zwingt es zu einem grossen,
+    -- freien, zentrierten Fenster -> geht ab sofort mitten im Bild auf.
+    hl.window_rule({ match = { class = "Termius" }, float = true, size = "1200 800", center = true })
   '';
 in
 {
