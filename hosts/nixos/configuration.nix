@@ -254,7 +254,7 @@ in
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
     termius           # SSH-Client -> Befehl `termius` (xpra-Huelle, s.o.)
     termius-launcher  # Launcher-Eintrag "Termius" (ruft die xpra-Huelle)
-    termius-fixed     # das eigentliche termius-app (von xpra gestartet)
+    # (termius-fixed/termius-app kommt automatisch ueber die xpra-Huelle mit)
     # native SSH-Alternativen als Fallback (falls Termius zickt):
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
