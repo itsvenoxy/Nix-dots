@@ -1,14 +1,15 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius (Electron) rendert auf Hyprland/Wayland + NVIDIA partout ein
-  # schwarzes Fenster (umfangreich diagnostiziert: GBM-Fehler liess sich mit
-  # GBM_BACKEND=nvidia-drm beseitigen, aber das Bild kommt nie an den
-  # Compositor -> bekannte NVIDIA/Wayland-Electron-Inkompatibilitaet). Unter X11
-  # rendert es dagegen normal. Darum hier KEINE Wayland/GBM-Flags mehr; der
-  # Wrapper laesst Electron unter X11 einfach den XCB-Pfad nehmen. Dieses
-  # termius-app wird von der xpra-Huelle unten in einem eigenen X-Server
-  # gestartet. --no-sandbox: chrome-sandbox der Paketierung nicht gesetzt.
+  # Termius (Electron) rendert auf Hyprland + NVIDIA ein schwarzes Fenster,
+  # sobald irgendein GPU-Pfad im Spiel ist (nativ Wayland via GBM/EGL: Bild
+  # kommt nie am Compositor an; XWayland: dito; xpra-X-Server: dito) -- alles
+  # bereits umfangreich diagnostiziert. Der Basis-Wrapper erzwingt darum
+  # REINES Software-Rendering: --disable-gpu + --disable-gpu-compositing
+  # nimmt Chromium den kompletten GPU-Prozess weg, gemalt wird per CPU in
+  # Shared-Memory-Buffer. --no-sandbox: chrome-sandbox der Paketierung nicht
+  # gesetzt. (Welches Display-Backend benutzt wird, entscheiden die Launcher
+  # unten: `termius` = natives Wayland, `termius-xpra` = eigener X-Server.)
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -23,15 +24,28 @@ let
     '';
   });
 
-  # Termius nahtlos in HYPRLAND nutzbar machen, obwohl es nur unter X11 rendert:
-  # xpra startet einen eigenen X-Server, laesst Termius darin laufen und blendet
-  # dessen Fenster nahtlos in Hyprland ein (seamless mode). Der eigene X-Server
-  # umgeht den kaputten Wayland-GBM/KMS-Pfad komplett. Aufruf einfach: `termius`.
+  # Standard-Aufruf `termius`: NATIVES Wayland + Software-Rendering. Mit
+  # --ozone-platform=wayland malt Chromium seine (per CPU gerenderten) Frames
+  # direkt in wl_shm-Buffer und reicht sie dem Compositor -- NVIDIA, GBM,
+  # XWayland und xpra sind damit KOMPLETT aus dem Spiel. Das ist der
+  # robusteste Anzeigepfad, den es gibt (dieselbe Route wie ein Screenshot-
+  # Bild) und der einzige, der hier noch nicht probiert wurde.
   termius = pkgs.writeShellScriptBin "termius" ''
+    exec ${termius-fixed}/bin/termius-app --ozone-platform=wayland "$@"
+  '';
+
+  # Fallback `termius-xpra`: eigener X-Server via xpra, Fenster wird seamless
+  # in Hyprland eingeblendet. WICHTIG: --opengl=no -- der xpra-CLIENT malt
+  # sonst standardmaessig per OpenGL, und genau dieser GL-Pfad ist auf
+  # NVIDIA/Wayland kaputt -> das eingeblendete Fenster blieb wieder schwarz,
+  # obwohl Termius im X-Server korrekt rendert. Ohne OpenGL malt der Client
+  # per Cairo/SHM.
+  termius-xpra = pkgs.writeShellScriptBin "termius-xpra" ''
     exec ${pkgs.xpra}/bin/xpra start \
       --start-child=${termius-fixed}/bin/termius-app \
       --exit-with-children=yes \
       --attach=yes \
+      --opengl=no \
       --daemon=no \
       --notifications=no \
       --mdns=no \
@@ -39,11 +53,11 @@ let
       --webcam=no
   '';
 
-  # Launcher-Eintrag "Termius" fuer den App-Launcher (ruft die xpra-Huelle auf).
+  # Launcher-Eintrag "Termius" fuer den App-Launcher (nativer Wayland-Start).
   termius-launcher = pkgs.makeDesktopItem {
     name = "termius";
     desktopName = "Termius";
-    comment = "SSH-Client (laeuft via xpra in einem X-Server, in Hyprland eingeblendet)";
+    comment = "SSH-Client (natives Wayland, Software-Rendering)";
     exec = "termius";
     icon = "termius-app";
     categories = [ "Network" "Utility" ];
@@ -254,9 +268,9 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    termius           # SSH-Client -> Befehl `termius` (xpra-Huelle, s.o.)
-    termius-launcher  # Launcher-Eintrag "Termius" (ruft die xpra-Huelle)
-    # (termius-fixed/termius-app kommt automatisch ueber die xpra-Huelle mit)
+    termius           # SSH-Client -> Befehl `termius` (nativ Wayland + SW-Rendering, s.o.)
+    termius-xpra      # Fallback: Termius via xpra in eigenem X-Server
+    termius-launcher  # Launcher-Eintrag "Termius" (ruft `termius`)
     # native SSH-Alternativen als Fallback (falls Termius zickt):
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
