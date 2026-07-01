@@ -4,11 +4,11 @@ let
   # Termius (Electron) rendert auf Hyprland/Wayland + NVIDIA partout ein
   # schwarzes Fenster (umfangreich diagnostiziert: GBM-Fehler liess sich mit
   # GBM_BACKEND=nvidia-drm beseitigen, aber das Bild kommt nie an den
-  # Compositor -> bekannte NVIDIA/Wayland-Electron-Inkompatibilitaet, nativ wie
-  # im Container). Loesung: Termius in der X11/Xorg-Session (Plasma) starten,
-  # dort rendert es normal (NVIDIA + Xorg ist stabil). Darum hier KEINE
-  # Wayland/GBM-Flags mehr -> der Wrapper laesst Electron unter X11 einfach den
-  # XCB-Pfad nehmen. --no-sandbox: chrome-sandbox der Paketierung nicht gesetzt.
+  # Compositor -> bekannte NVIDIA/Wayland-Electron-Inkompatibilitaet). Unter X11
+  # rendert es dagegen normal. Darum hier KEINE Wayland/GBM-Flags mehr; der
+  # Wrapper laesst Electron unter X11 einfach den XCB-Pfad nehmen. Dieses
+  # termius-app wird von der xpra-Huelle unten in einem eigenen X-Server
+  # gestartet. --no-sandbox: chrome-sandbox der Paketierung nicht gesetzt.
   termius-fixed = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libGL pkgs.sqlite ];
     autoPatchelfIgnoreMissingDeps =
@@ -20,6 +20,32 @@ let
         --add-flags "--no-sandbox"
     '';
   });
+
+  # Termius nahtlos in HYPRLAND nutzbar machen, obwohl es nur unter X11 rendert:
+  # xpra startet einen eigenen X-Server, laesst Termius darin laufen und blendet
+  # dessen Fenster nahtlos in Hyprland ein (seamless mode). Der eigene X-Server
+  # umgeht den kaputten Wayland-GBM/KMS-Pfad komplett. Aufruf einfach: `termius`.
+  termius = pkgs.writeShellScriptBin "termius" ''
+    exec ${pkgs.xpra}/bin/xpra start \
+      --start-child=${termius-fixed}/bin/termius-app \
+      --exit-with-children=yes \
+      --attach=yes \
+      --daemon=no \
+      --notifications=no \
+      --mdns=no \
+      --pulseaudio=no \
+      --webcam=no
+  '';
+
+  # Launcher-Eintrag "Termius" fuer den App-Launcher (ruft die xpra-Huelle auf).
+  termius-launcher = pkgs.makeDesktopItem {
+    name = "termius";
+    desktopName = "Termius";
+    comment = "SSH-Client (laeuft via xpra in einem X-Server, in Hyprland eingeblendet)";
+    exec = "termius";
+    icon = "termius-app";
+    categories = [ "Network" "Utility" ];
+  };
 
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
@@ -94,13 +120,8 @@ in
   users.users.janis = {
     isNormalUser = true;
     description = "Janis";
-    extraGroups = [ "wheel" "networkmanager" "video" "audio" "render" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     shell = pkgs.bash;
-    # subuid/subgid-Bereiche fuer rootless Podman/Distrobox. Ohne die scheitert
-    # `distrobox enter` mit "unable to find user janis: no matching entries in
-    # passwd file", weil der Container den User nicht mappen kann.
-    subUidRanges = [ { startUid = 100000; count = 65536; } ];
-    subGidRanges = [ { startGid = 100000; count = 65536; } ];
   };
 
   # ---------------------------------------------------------------------------
@@ -135,16 +156,6 @@ in
     theme = "default";
     # settings = { ... };  # Feintuning, siehe Modul-Beispiel / SilentSDDM-Wiki
   };
-
-  # ---------------------------------------------------------------------------
-  # Zusaetzliche X11/Xorg-Session (KDE Plasma) NEBEN Hyprland. Zweck: Apps, die
-  # auf Wayland/NVIDIA nicht rendern (v.a. Termius), laufen unter Xorg stabil.
-  # Im SDDM-Login unten die Session auf "Plasma (X11)" umschalten, sonst bleibt
-  # Hyprland der Standard (defaultSession). NVIDIA-Xorg via videoDrivers oben.
-  # ---------------------------------------------------------------------------
-  services.xserver.enable = true;                 # Xorg fuer die X11-Session
-  services.desktopManager.plasma6.enable = true;  # liefert die "Plasma (X11)"-Session
-  services.displayManager.defaultSession = "hyprland";  # Hyprland bleibt Default
 
   # XDG-Portals (Screenshare, Datei-Dialoge etc.)
   xdg.portal = {
@@ -211,26 +222,6 @@ in
   };
   programs.gamemode.enable = true;         # Feral GameMode -> bessere Performance
 
-  # ---------------------------------------------------------------------------
-  # Podman + Distrobox: fuer Apps, die auf nativem NixOS nicht laufen.
-  # Termius (Electron) rendert auf NixOS nativ nur ein schwarzes Fenster. In
-  # einem Ubuntu-24.04-Distrobox mit funktionierender GPU laeuft Termius 9.40.1
-  # wie unter Arch und wird per distrobox-export in den Host-Launcher gebracht.
-  # ---------------------------------------------------------------------------
-  virtualisation.podman = {
-    enable = true;
-    dockerCompat = true;                   # `docker`-CLI zeigt auf podman
-    defaultNetwork.settings.dns_enabled = true;
-  };
-
-  # NVIDIA-GPU im Container. `distrobox --nvidia` funktioniert auf NixOS NICHT
-  # (es sucht die Treiber an FHS-Pfaden, die NixOS nicht hat -> im Container
-  # "libEGL: failed to create dri2 screen, driver (null)" -> schwarz). Richtig
-  # ist das nvidia-container-toolkit mit CDI: NixOS generiert beim Boot eine
-  # CDI-Spec (/var/run/cdi), und der Container bekommt die GPU ueber
-  # `--device nvidia.com/gpu=all` korrekt durchgereicht.
-  hardware.nvidia-container-toolkit.enable = true;
-
   # ZRAM als Swap (wie auf Arch)
   zramSwap.enable = true;
 
@@ -242,7 +233,6 @@ in
     vim
     wget
     curl
-    distrobox         # Ubuntu-Container fuer Termius (s. virtualisation.podman)
     pavucontrol
     spotifyd
     htop
@@ -262,7 +252,9 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    termius-fixed     # SSH-Client (Wrapper: libGL + Software-Rendering, s.o.)
+    termius           # SSH-Client -> Befehl `termius` (xpra-Huelle, s.o.)
+    termius-launcher  # Launcher-Eintrag "Termius" (ruft die xpra-Huelle)
+    termius-fixed     # das eigentliche termius-app (von xpra gestartet)
     # native SSH-Alternativen als Fallback (falls Termius zickt):
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
