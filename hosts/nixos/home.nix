@@ -17,11 +17,6 @@ let
     -- damit die UI auf beiden gleich gross ist. DP-4 per "auto" buendig rechts.
     hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",  scale = "1" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "auto", scale = "1" })
-
-    -- Eigene App-Keybinds (zusaetzlich zu den Dots-Binds):
-    hl.bind("SUPER + B", hl.dsp.exec_cmd("brave-origin-beta"))  -- Browser
-    hl.bind("SUPER + T", hl.dsp.exec_cmd("kitty"))              -- Terminal
-    hl.bind("SUPER + Y", hl.dsp.exec_cmd("kitty yazi"))         -- Yazi (TUI-Dateimanager, in kitty)
   '';
 in
 {
