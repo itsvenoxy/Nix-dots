@@ -6,10 +6,6 @@ let
   marketplace = pkgs.vscode-marketplace;
 
   # Monitor-Setup fuer die Lua-Config der Dots (hl.monitor aus hyprland/lib).
-  # DP-3 (MAG321CURV) ist ein 4K-Panel -> NATIV 3840x2160 fahren und mit
-  # Skalierung 1.5 auf logisch 2560x1440 bringen (scharf, UI-Groesse wie 1440p).
-  # DP-4 (MSI MAG322CQR) ist natives 1440p -> 2560x1440@165, Skalierung 1.
-  # Beide haben so logisch 2560x1440 -> gleiche Groesse, nahtloser Uebergang.
   monitorsLua = ''
     -- Monitore (von home-manager gesetzt, siehe home.nix)
     -- BEIDE Monitore sind native 2560x1440 (DP-3 = MAG321CURV @60Hz,
@@ -17,6 +13,22 @@ let
     -- damit die UI auf beiden gleich gross ist. DP-4 per "auto" buendig rechts.
     hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",  scale = "1" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "auto", scale = "1" })
+  '';
+
+  # Standard-Apps der Dots-Keybinds umbiegen. Die Dots laden
+  # ~/.config/hypr/custom/variables.lua VOR den Keybinds (offizieller
+  # Override-Hook, siehe hyprland/keybinds.lua) -> globale Neuzuweisung der
+  # Variablen genuegt, und die bestehenden Kombis starten unsere Apps:
+  #   Super+T / Super+Return / Ctrl+Alt+T -> terminal
+  #   Super+E                             -> fileManager
+  #   Super+W                             -> browser
+  # (Super+B bleibt der Sidebar-Toggle der Shell.) KEIN "local" davor --
+  # es muessen die Globals der Dots ueberschrieben werden.
+  variablesLua = ''
+    -- Standard-Apps (von home-manager gesetzt, siehe home.nix)
+    terminal    = "kitty"
+    browser     = "brave-origin-beta"
+    fileManager = "kitty yazi"
   '';
 in
 {
@@ -105,10 +117,12 @@ in
     };
   };
 
-  # Monitor-Config in die Lua-Dots schreiben, NACH deren Seeding (sonst
-  # ueberschreibt das Dots-Seeding custom/general.lua wieder).
+  # Monitor- und App-Variablen-Config in die Lua-Dots schreiben, NACH deren
+  # Seeding (das Dots-Seeding loescht/kopiert ~/.config/hypr bei jedem Switch
+  # neu, wuerde die Dateien also sonst wieder ueberschreiben).
   home.activation.setMonitors = lib.hm.dag.entryAfter [ "copyIllogicalImpulseConfigs" ] ''
     $DRY_RUN_CMD install -Dm644 ${pkgs.writeText "hypr-custom-general.lua" monitorsLua} "$HOME/.config/hypr/custom/general.lua"
+    $DRY_RUN_CMD install -Dm644 ${pkgs.writeText "hypr-custom-variables.lua" variablesLua} "$HOME/.config/hypr/custom/variables.lua"
   '';
 
   programs.home-manager.enable = true;
