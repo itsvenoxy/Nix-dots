@@ -18,24 +18,29 @@ let
     '';
   });
 
-  # `termius-xpra`: Termius in einem eigenen X-Server (xpra), Fenster wird in
-  # Hyprland eingeblendet. Kern: --opengl=no! Der xpra-CLIENT malt dann per
-  # Cairo/SHM-Pixelbuffer (wie ein Bildbetrachter) statt per OpenGL -- der
-  # GL-Pfad ist auf NVIDIA/Wayland genau das, was schwarz bleibt. Dass Termius
-  # im X-Server korrekt rendert, ist durch den Plasma-X11-Test bewiesen.
+  # `termius-xpra`: Termius in einem eigenen X-Server (xpra), angezeigt im
+  # BROWSER via xpras HTML5-Client (http://127.0.0.1:14500). Hintergrund: auf
+  # Hyprland/NVIDIA zeigt weder der Wayland-Pfad von Electron noch der
+  # xpra-GTK-Client ein Fenster an -- der Browser (Brave) rendert dagegen
+  # nachweislich einwandfrei. Termius rendert im X-Server korrekt (bewiesen
+  # durch den Plasma-X11-Test); der Browser zeigt nur dessen Bild an.
   # --no-sandbox: chrome-sandbox der Paketierung ist nicht eingerichtet.
   termius-xpra = pkgs.writeShellScriptBin "termius-xpra" ''
-    exec ${pkgs.xpra}/bin/xpra start \
+    ${pkgs.xpra}/bin/xpra start \
       --start-child="${termius-clean}/bin/termius-app --no-sandbox" \
       --exit-with-children=yes \
-      --attach=yes \
-      --opengl=no \
+      --bind-tcp=127.0.0.1:14500 \
+      --html=on \
       --daemon=no \
       --notifications=no \
       --mdns=no \
       --pulseaudio=no \
       --webcam=no \
-      --printing=no
+      --printing=no &
+    XPRA_PID=$!
+    sleep 6
+    xdg-open "http://127.0.0.1:14500" >/dev/null 2>&1 || true
+    wait $XPRA_PID
   '';
 
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
