@@ -17,15 +17,6 @@ let
     -- damit die UI auf beiden gleich gross ist. DP-4 per "auto" buendig rechts.
     hl.monitor({ output = "DP-3", mode = "2560x1440@60",  position = "0x0",  scale = "1" })
     hl.monitor({ output = "DP-4", mode = "2560x1440@165", position = "auto", scale = "1" })
-
-    -- Termius: erzwungen floating, gross und zentriert. Ohne diese Regel ging
-    -- das Fenster getilet/klein auf irgendeinem Workspace auf und wirkte wie
-    -- "kein Fenster". Klasse-Regex deckt XWayland (Termius) und natives
-    -- Wayland (termius-app/kleingeschrieben) ab.
-    -- opaque: Termius' rahmenloses Fenster liefert auf dem Wayland-SHM-Pfad
-    -- offenbar einen kaputten Alpha-Kanal -> Hyprland komposittet es
-    -- durchsichtig ("schwarz"). opaque laesst Hyprland das Alpha ignorieren.
-    hl.window_rule({ match = { class = "[Tt]ermius.*" }, float = true, size = "1200 800", center = true, opaque = true })
   '';
 in
 {
