@@ -1,33 +1,18 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius, auf 9.39.0 gehoben (nixpkgs master, snap rev 263). Grund: die in
-  # unserem nixpkgs-Pin enthaltene 9.36.2 buendelt ein ALTES Electron, dessen
-  # Wayland-Support kaputt ist -> schwarzes Fenster auf Hyprland/NVIDIA, egal
-  # welcher Anzeigepfad (alles durchgetestet; unter Plasma/X11 lief es).
-  # Dasselbe Muster hatte Claude Desktop: altes Electron = leeres Fenster,
-  # neues Electron = laeuft. 9.39.0 bringt ein neueres Electron mit.
-  # Build-Fixes wie gehabt: sqlite (libsqlite3.so.0, nixpkgs #438763) und
-  # libGL fuer den dlopen von libGL.so.1. --no-sandbox: chrome-sandbox der
-  # Paketierung ist nicht eingerichtet. Start: `termius-app`.
-  termius-clean = pkgs.termius.overrideAttrs (old: rec {
-    version = "9.39.0";
-    src = pkgs.fetchurl {
-      url = "https://api.snapcraft.io/api/v1/snaps/download/WkTBXwoX81rBe3s3OTt3EiiLKBx2QhuS_263.snap";
-      hash = "sha512-DbSUzg84xHx8xnbvbILTXG1KV2v3GQqli732JofYQIma+M2bPfeCchUF50q8qXOSO0kG/UPD5QPJj0baWv9g8w==";
-    };
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite pkgs.libGL ];
-    autoPatchelfIgnoreMissingDeps =
-      (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
-    postFixup = ''
-      makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
-        "''${gappsWrapperArgs[@]}" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --add-flags "--ozone-platform=wayland" \
-        --add-flags "--disable-gpu" \
-        --add-flags "--no-sandbox"
-    '';
-  });
+  # Termius kommt als FLATPAK (com.termius.Termius, siehe services.flatpak
+  # unten) -- die Nix/Snap-Paketierung (Electron 21 + gebuendelte alte Libs)
+  # rendert unter Hyprland nicht. Eigener Launcher-Eintrag, der das Flatpak
+  # startet, damit "Termius" sicher im App-Launcher auftaucht.
+  termius-flatpak-launcher = pkgs.makeDesktopItem {
+    name = "termius";
+    desktopName = "Termius";
+    comment = "SSH-Client (Flatpak)";
+    exec = "flatpak run com.termius.Termius";
+    icon = "com.termius.Termius";
+    categories = [ "Network" "Utility" ];
+  };
 
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
@@ -247,7 +232,7 @@ in
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
     # SSH-Clients:
-    termius-clean     # Termius (natives Wayland, Software-Rendering) -> `termius-app`
+    termius-flatpak-launcher  # Launcher-Eintrag "Termius" (startet das Flatpak)
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
