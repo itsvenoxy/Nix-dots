@@ -1,6 +1,16 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
+  # Termius, clean: Stock-Paket ohne jegliche Display-/GPU-Hacks. Einziger
+  # Eingriff ist ein reiner BUILD-Fix: die nixpkgs-Paketierung findet
+  # libsqlite3.so.0 nicht (nixpkgs #438763), darum sqlite als buildInput +
+  # die Meldung fuer autoPatchelf ignorieren. Start: `termius-app`.
+  termius-clean = pkgs.termius.overrideAttrs (old: {
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite ];
+    autoPatchelfIgnoreMissingDeps =
+      (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
+  });
+
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
   # (OAuth-Ruecksprung nach dem Login).
@@ -206,7 +216,8 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
-    # SSH-Clients (Termius entfernt: rendert auf Wayland/NVIDIA nicht):
+    # SSH-Clients:
+    termius-clean     # Termius, stock (nur Build-Fix, keine Hacks) -> `termius-app`
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
