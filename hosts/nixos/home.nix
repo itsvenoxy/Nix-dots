@@ -22,7 +22,10 @@ let
     -- das Fenster getilet/klein auf irgendeinem Workspace auf und wirkte wie
     -- "kein Fenster". Klasse-Regex deckt XWayland (Termius) und natives
     -- Wayland (termius-app/kleingeschrieben) ab.
-    hl.window_rule({ match = { class = "[Tt]ermius.*" }, float = true, size = "1200 800", center = true })
+    -- opaque: Termius' rahmenloses Fenster liefert auf dem Wayland-SHM-Pfad
+    -- offenbar einen kaputten Alpha-Kanal -> Hyprland komposittet es
+    -- durchsichtig ("schwarz"). opaque laesst Hyprland das Alpha ignorieren.
+    hl.window_rule({ match = { class = "[Tt]ermius.*" }, float = true, size = "1200 800", center = true, opaque = true })
   '';
 in
 {
