@@ -18,6 +18,26 @@ let
     '';
   });
 
+  # `termius-xpra`: Termius in einem eigenen X-Server (xpra), Fenster wird in
+  # Hyprland eingeblendet. Kern: --opengl=no! Der xpra-CLIENT malt dann per
+  # Cairo/SHM-Pixelbuffer (wie ein Bildbetrachter) statt per OpenGL -- der
+  # GL-Pfad ist auf NVIDIA/Wayland genau das, was schwarz bleibt. Dass Termius
+  # im X-Server korrekt rendert, ist durch den Plasma-X11-Test bewiesen.
+  # --no-sandbox: chrome-sandbox der Paketierung ist nicht eingerichtet.
+  termius-xpra = pkgs.writeShellScriptBin "termius-xpra" ''
+    exec ${pkgs.xpra}/bin/xpra start \
+      --start-child="${termius-clean}/bin/termius-app --no-sandbox" \
+      --exit-with-children=yes \
+      --attach=yes \
+      --opengl=no \
+      --daemon=no \
+      --notifications=no \
+      --mdns=no \
+      --pulseaudio=no \
+      --webcam=no \
+      --printing=no
+  '';
+
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
   # (OAuth-Ruecksprung nach dem Login).
@@ -224,7 +244,8 @@ in
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
     # SSH-Clients:
-    termius-clean     # Termius, stock (nur Build-Fix, keine Hacks) -> `termius-app`
+    termius-clean     # Termius, stock (nur Build-/libGL-Fix) -> `termius-app`
+    termius-xpra      # Termius via xpra-X-Server, Client ohne OpenGL -> `termius-xpra`
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
