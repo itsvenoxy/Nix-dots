@@ -94,6 +94,14 @@ in
     hyprcursor.enable = true;
   };
 
+  # Dark Mode als Standard, systemweit. GTK-Apps und Flatpaks (z.B. Termius)
+  # fragen die Praeferenz ueber das XDG-Portal ab, das sie aus dconf liest
+  # (org.freedesktop.appearance color-scheme). Ohne das starten Flatpaks hell
+  # (bekannt: flathub/com.termius.Termius#82).
+  dconf.settings."org/gnome/desktop/interface" = {
+    color-scheme = "prefer-dark";
+  };
+
   # brave-origin als Standardbrowser (Desktop-Datei: brave-origin-beta.desktop)
   xdg.mimeApps = {
     enable = true;

@@ -130,6 +130,10 @@ in
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
   };
 
+  # dconf: Backend fuer die Dark-Mode-Praeferenz (siehe dconf.settings in
+  # home.nix) -- Portale/Flatpaks lesen color-scheme daraus.
+  programs.dconf.enable = true;
+
   # Von den illogical-impulse Dots benoetigt (QtPositioning/Wetter etc.)
   services.geoclue2.enable = true;
 
