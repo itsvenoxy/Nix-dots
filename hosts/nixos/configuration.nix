@@ -204,6 +204,18 @@ in
   };
   programs.gamemode.enable = true;         # Feral GameMode -> bessere Performance
 
+  # Flatpak: fuer Apps, deren Nix-Paketierung kaputt ist. Konkret Termius:
+  # dessen Snap-Repack (altes Electron 21 + gebuendelte alte Libs) initialisiert
+  # unter Hyprland keine Grafik -> schwarzes/kein Fenster, egal welcher Pfad.
+  # Das offizielle Flatpak (com.termius.Termius) bringt seine komplette eigene
+  # Runtime inkl. passender NVIDIA-GL mit und erzwingt X11/XWayland -- rendert
+  # nachweislich auf Wayland-Desktops (flathub/com.termius.Termius#82).
+  # Einrichtung (einmalig als User):
+  #   flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  #   flatpak install -y flathub com.termius.Termius
+  #   flatpak run com.termius.Termius
+  services.flatpak.enable = true;
+
   # ZRAM als Swap (wie auf Arch)
   zramSwap.enable = true;
 
