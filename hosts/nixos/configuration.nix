@@ -23,6 +23,8 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
+        --add-flags "--ozone-platform=wayland" \
+        --add-flags "--disable-gpu" \
         --add-flags "--no-sandbox"
     '';
   });
