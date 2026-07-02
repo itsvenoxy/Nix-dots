@@ -1,15 +1,21 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius. Build-Fixes: libsqlite3.so.0 fehlt in der nixpkgs-Paketierung
-  # (nixpkgs #438763) -> sqlite als buildInput; libGL fuer den dlopen von
-  # libGL.so.1. Anzeige-Strategie (einziger nativer Weg ohne xpra, der auf
-  # Hyprland/NVIDIA funktionieren kann): NATIVES Wayland + GPU komplett aus.
-  # Electron malt dann per CPU in wl_shm-Buffer und reicht sie direkt an den
-  # Compositor -- kein GBM, kein GL, kein XWayland (alle bisherigen
-  # Schwarz-Fenster-Pfade sind damit umgangen). --no-sandbox: chrome-sandbox
-  # der Paketierung ist nicht eingerichtet. Start: `termius-app`.
-  termius-clean = pkgs.termius.overrideAttrs (old: {
+  # Termius, auf 9.39.0 gehoben (nixpkgs master, snap rev 263). Grund: die in
+  # unserem nixpkgs-Pin enthaltene 9.36.2 buendelt ein ALTES Electron, dessen
+  # Wayland-Support kaputt ist -> schwarzes Fenster auf Hyprland/NVIDIA, egal
+  # welcher Anzeigepfad (alles durchgetestet; unter Plasma/X11 lief es).
+  # Dasselbe Muster hatte Claude Desktop: altes Electron = leeres Fenster,
+  # neues Electron = laeuft. 9.39.0 bringt ein neueres Electron mit.
+  # Build-Fixes wie gehabt: sqlite (libsqlite3.so.0, nixpkgs #438763) und
+  # libGL fuer den dlopen von libGL.so.1. --no-sandbox: chrome-sandbox der
+  # Paketierung ist nicht eingerichtet. Start: `termius-app`.
+  termius-clean = pkgs.termius.overrideAttrs (old: rec {
+    version = "9.39.0";
+    src = pkgs.fetchurl {
+      url = "https://api.snapcraft.io/api/v1/snaps/download/WkTBXwoX81rBe3s3OTt3EiiLKBx2QhuS_263.snap";
+      hash = "sha512-DbSUzg84xHx8xnbvbILTXG1KV2v3GQqli732JofYQIma+M2bPfeCchUF50q8qXOSO0kG/UPD5QPJj0baWv9g8w==";
+    };
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite pkgs.libGL ];
     autoPatchelfIgnoreMissingDeps =
       (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
@@ -17,9 +23,6 @@ let
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
         --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
-        --add-flags "--ozone-platform=wayland" \
-        --add-flags "--disable-gpu" \
-        --add-flags "--disable-gpu-compositing" \
         --add-flags "--no-sandbox"
     '';
   });
