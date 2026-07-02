@@ -1,14 +1,21 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius, clean: Stock-Paket ohne jegliche Display-/GPU-Hacks. Einziger
-  # Eingriff ist ein reiner BUILD-Fix: die nixpkgs-Paketierung findet
-  # libsqlite3.so.0 nicht (nixpkgs #438763), darum sqlite als buildInput +
-  # die Meldung fuer autoPatchelf ignorieren. Start: `termius-app`.
+  # Termius, clean: Stock-Paket ohne Display-/GPU-Hacks. Zwei reine
+  # Paketierungs-Fixes: (1) BUILD: libsqlite3.so.0 fehlt (nixpkgs #438763) ->
+  # sqlite als buildInput + Meldung fuer autoPatchelf ignorieren. (2) LAUFZEIT:
+  # Termius dlopen't libGL.so.1, die Paketierung reicht den NixOS-Treiberpfad
+  # nicht durch ("Could not dlopen libGL.so.1") -> libGL + /run/opengl-driver
+  # in den Library-Pfad des Wrappers. Start: `termius-app`.
   termius-clean = pkgs.termius.overrideAttrs (old: {
-    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite ];
+    buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite pkgs.libGL ];
     autoPatchelfIgnoreMissingDeps =
       (old.autoPatchelfIgnoreMissingDeps or [ ]) ++ [ "libsqlite3.so.0" ];
+    postFixup = ''
+      makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
+        "''${gappsWrapperArgs[@]}" \
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib"
+    '';
   });
 
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
