@@ -1,12 +1,14 @@
 { config, pkgs, lib, inputs, ... }:
 
 let
-  # Termius, clean: Stock-Paket ohne Display-/GPU-Hacks. Zwei reine
-  # Paketierungs-Fixes: (1) BUILD: libsqlite3.so.0 fehlt (nixpkgs #438763) ->
-  # sqlite als buildInput + Meldung fuer autoPatchelf ignorieren. (2) LAUFZEIT:
-  # Termius dlopen't libGL.so.1, die Paketierung reicht den NixOS-Treiberpfad
-  # nicht durch ("Could not dlopen libGL.so.1") -> libGL + /run/opengl-driver
-  # in den Library-Pfad des Wrappers. Start: `termius-app`.
+  # Termius. Build-Fixes: libsqlite3.so.0 fehlt in der nixpkgs-Paketierung
+  # (nixpkgs #438763) -> sqlite als buildInput; libGL fuer den dlopen von
+  # libGL.so.1. Anzeige-Strategie (einziger nativer Weg ohne xpra, der auf
+  # Hyprland/NVIDIA funktionieren kann): NATIVES Wayland + GPU komplett aus.
+  # Electron malt dann per CPU in wl_shm-Buffer und reicht sie direkt an den
+  # Compositor -- kein GBM, kein GL, kein XWayland (alle bisherigen
+  # Schwarz-Fenster-Pfade sind damit umgangen). --no-sandbox: chrome-sandbox
+  # der Paketierung ist nicht eingerichtet. Start: `termius-app`.
   termius-clean = pkgs.termius.overrideAttrs (old: {
     buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.sqlite pkgs.libGL ];
     autoPatchelfIgnoreMissingDeps =
@@ -14,34 +16,13 @@ let
     postFixup = ''
       makeWrapper $out/opt/termius/termius-app $out/bin/termius-app \
         "''${gappsWrapperArgs[@]}" \
-        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib"
+        --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.libGL ]}:/run/opengl-driver/lib" \
+        --add-flags "--ozone-platform=wayland" \
+        --add-flags "--disable-gpu" \
+        --add-flags "--disable-gpu-compositing" \
+        --add-flags "--no-sandbox"
     '';
   });
-
-  # `termius-xpra`: Termius in einem eigenen X-Server (xpra), angezeigt im
-  # BROWSER via xpras HTML5-Client (http://127.0.0.1:14500). Hintergrund: auf
-  # Hyprland/NVIDIA zeigt weder der Wayland-Pfad von Electron noch der
-  # xpra-GTK-Client ein Fenster an -- der Browser (Brave) rendert dagegen
-  # nachweislich einwandfrei. Termius rendert im X-Server korrekt (bewiesen
-  # durch den Plasma-X11-Test); der Browser zeigt nur dessen Bild an.
-  # --no-sandbox: chrome-sandbox der Paketierung ist nicht eingerichtet.
-  termius-xpra = pkgs.writeShellScriptBin "termius-xpra" ''
-    ${pkgs.xpra}/bin/xpra start \
-      --start-child="${termius-clean}/bin/termius-app --no-sandbox" \
-      --exit-with-children=yes \
-      --bind-tcp=127.0.0.1:14500 \
-      --html=on \
-      --daemon=no \
-      --notifications=no \
-      --mdns=no \
-      --pulseaudio=no \
-      --webcam=no \
-      --printing=no &
-    XPRA_PID=$!
-    sleep 6
-    xdg-open "http://127.0.0.1:14500" >/dev/null 2>&1 || true
-    wait $XPRA_PID
-  '';
 
   # claude-cowork-nix bringt keinen Launcher-Eintrag mit -> selbst bauen, damit
   # "Claude" im App-Launcher auftaucht. Registriert auch den claude://-Handler
@@ -249,8 +230,7 @@ in
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
     # SSH-Clients:
-    termius-clean     # Termius, stock (nur Build-/libGL-Fix) -> `termius-app`
-    termius-xpra      # Termius via xpra-X-Server, Client ohne OpenGL -> `termius-xpra`
+    termius-clean     # Termius (natives Wayland, Software-Rendering) -> `termius-app`
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
     wezterm           # nativer Terminal mit eingebautem SSH (SSH-Domains)
     antigravity       # Google Antigravity IDE
