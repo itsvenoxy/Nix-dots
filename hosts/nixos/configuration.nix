@@ -55,6 +55,10 @@ in
   # ---------------------------------------------------------------------------
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Nur die letzten Generationen im Bootmenue behalten. Ohne Limit sammelt
+  # jede Generation Kernel+initrd auf der kleinen EFI-Partition, bis Rebuilds
+  # mit "no space left on /boot" fehlschlagen.
+  boot.loader.systemd-boot.configurationLimit = 10;
   # Aktuellster Kernel (gut fuer neue Hardware wie Raptor Lake / RTX 4090)
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -217,7 +221,6 @@ in
     wget
     curl
     pavucontrol
-    spotifyd
     htop
     vesktop          # Discord-Client (Vencord) statt offiziellem Discord
     obsidian
@@ -234,7 +237,7 @@ in
     telegram-desktop  # offizieller Client
 
     # Weitere Apps
-    spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
+    spotify           # Spotify-GUI
     modrinth-app      # Minecraft-Launcher (Mods/Modpacks von Modrinth)
 
     # Battle.net (kein Linux-Client) -> ueber Lutris + Wine installieren:
@@ -267,7 +270,7 @@ in
     # Laufzeit-Abhaengigkeit fuer Hyprlands GUI-Dialoge (update/plugin/dialog).
     hyprland-qtutils
 
-    # Datei-Manager (Default fuer den fileManager-Keybind der Dots)
+    # GUI-Datei-Manager (der Super+E-Keybind startet yazi in kitty, s. home.nix)
     nautilus
 
     # Host fuer die "Plasma Integration"-Browser-Extension (Medien->MPRIS etc.)
@@ -290,17 +293,29 @@ in
   # Flakes + neue Nix-Kommandos aktivieren
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  # Automatische Muellabfuhr: alte Generationen/Store-Pfade woechentlich
+  # loeschen (aelter als 14 Tage) und den Store deduplizieren. Verhindert,
+  # dass der Store nach vielen Rebuilds zig GB Altlasten ansammelt.
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 14d";
+  };
+  nix.settings.auto-optimise-store = true;
+
   # fish aktivieren, damit environment.shellAliases auch in der fish-Shell
   # greifen (die illogical-Dots starten fish im Terminal).
   programs.fish.enable = true;
 
-  # Praktische Aliase fuers Rebuilden (Config liegt unter /home/janis/Nix-dots)
+  # Praktische Aliase fuers Rebuilden (Config liegt unter /home/janis/Nix-dots).
+  # Kein --impure mehr: allowUnfree steht in der Config, die Flake evaluiert
+  # pur -> reproduzierbarere Builds.
   environment.shellAliases = {
-    nrs = "sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos --impure";
-    nrt = "sudo nixos-rebuild test   --flake /home/janis/Nix-dots#nixos --impure";
-    nrb = "sudo nixos-rebuild boot   --flake /home/janis/Nix-dots#nixos --impure";
+    nrs = "sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos";
+    nrt = "sudo nixos-rebuild test   --flake /home/janis/Nix-dots#nixos";
+    nrb = "sudo nixos-rebuild boot   --flake /home/janis/Nix-dots#nixos";
     # erst neueste Config ziehen, dann switchen
-    nixup = "git -C /home/janis/Nix-dots pull origin main && sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos --impure";
+    nixup = "git -C /home/janis/Nix-dots pull origin main && sudo nixos-rebuild switch --flake /home/janis/Nix-dots#nixos";
   };
 
   # sudo fuer wheel ohne extra Config

@@ -1,8 +1,8 @@
 { config, lib, pkgs, modulesPath, ... }:
 
-# ACHTUNG: Diese Datei ist anhand deiner aktuellen Arch-Partitionen vorgebaut.
-# Beim Installieren bitte mit `nixos-generate-config` neu erzeugen lassen und
-# diese Datei damit ersetzen -> dann sind Kernel-Module/UUIDs garantiert korrekt.
+# Echte Partition-UUIDs der NixOS-Installation (nvme, ext4-Root + EFI-Boot,
+# keine separate /home-Partition). Bei einer Neuinstallation mit
+# `nixos-generate-config --root /mnt` neu erzeugen und hier ersetzen.
 
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -14,23 +14,15 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
-  # / -> nvme0n1p2 (ext4)
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/209f864e-0f7b-4125-a1ca-954381f15ceb";
+    device = "/dev/disk/by-uuid/c9e56ab4-2652-4278-b58b-860938d0a670";
     fsType = "ext4";
   };
 
-  # /boot -> nvme0n1p1 (EFI/vfat)
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/AFF9-610F";
+    device = "/dev/disk/by-uuid/2E5E-FE8B";
     fsType = "vfat";
     options = [ "fmask=0077" "dmask=0077" ];
-  };
-
-  # /home -> nvme0n1p3 (ext4) - deine bestehende Home-Partition bleibt erhalten
-  fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/d5d7d1bf-146d-467e-96ba-2acdae3bf6bf";
-    fsType = "ext4";
   };
 
   swapDevices = [ ];

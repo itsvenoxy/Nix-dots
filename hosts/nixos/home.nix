@@ -51,10 +51,12 @@ in
     };
   };
 
-  # VS Code (stable) declarative: Extensions + Settings aus deiner Arch-Installation
-  programs.vscode = {
+  # VSCodium declarative: Extensions + Settings aus deiner Arch-Installation.
+  # programs.vscodium (statt programs.vscode mit vscodium-package), damit die
+  # Config in die richtigen Pfade geschrieben wird (~/.config/VSCodium statt
+  # ~/.config/Code) -- sonst kommen Settings/Extensions im Editor nie an.
+  programs.vscodium = {
     enable = true;
-    package = pkgs.vscodium;
 
     profiles.default = {
       extensions = with marketplace; [
