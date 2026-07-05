@@ -235,6 +235,7 @@ in
 
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
+    modrinth-app      # Minecraft-Launcher (Mods/Modpacks von Modrinth)
     # SSH-Clients:
     termius-flatpak-launcher  # Launcher-Eintrag "Termius" (startet das Flatpak)
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
