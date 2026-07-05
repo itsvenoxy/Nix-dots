@@ -236,6 +236,13 @@ in
     # Weitere Apps
     spotify           # GUI (zusaetzlich zum spotifyd-Daemon oben)
     modrinth-app      # Minecraft-Launcher (Mods/Modpacks von Modrinth)
+
+    # Battle.net (kein Linux-Client) -> ueber Lutris + Wine installieren:
+    # Lutris oeffnen -> Suche "Battle.net" -> Installer von lutris.net laufen
+    # lassen. 32-Bit-Grafik ist via hardware.graphics.enable32Bit schon aktiv.
+    lutris
+    wineWowPackages.staging  # Wine (32+64 Bit, staging) als Runner
+    winetricks
     # SSH-Clients:
     termius-flatpak-launcher  # Launcher-Eintrag "Termius" (startet das Flatpak)
     sshs              # TUI-SSH-Manager (liest ~/.ssh/config, Host-Picker)
