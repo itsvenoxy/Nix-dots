@@ -103,6 +103,11 @@ in
     enable32Bit = true;                   # noetig fuer Steam/Wine/32-Bit-Apps
   };
 
+  # WebKitGTK-Apps (Tauri, z.B. Modrinth App) crashen auf NVIDIA+Wayland sofort
+  # mit "Gdk-Message: Error 71 (Protocol error)" -- bekannter DMA-BUF-Renderer-
+  # Bug. Workaround lt. WebKit/Tauri-Doku: DMA-BUF-Renderer abschalten.
+  environment.sessionVariables.WEBKIT_DISABLE_DMABUF_RENDERER = "1";
+
   services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
     modesetting.enable = true;            # Pflicht fuer Wayland/Hyprland
