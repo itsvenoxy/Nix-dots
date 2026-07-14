@@ -51,14 +51,29 @@ in
   ];
 
   # ---------------------------------------------------------------------------
-  # Bootloader (UEFI -> systemd-boot, einfachste Variante)
+  # Bootloader: GRUB (UEFI) mit Elegant-Theme. Umstieg von systemd-boot, weil
+  # das keine Themes kann. Bonus: os-prober findet Windows automatisch und
+  # legt den Dualboot-Eintrag ins Menue.
   # ---------------------------------------------------------------------------
-  boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  # Nur die letzten Generationen im Bootmenue behalten. Ohne Limit sammelt
-  # jede Generation Kernel+initrd auf der kleinen EFI-Partition, bis Rebuilds
-  # mit "no space left on /boot" fehlschlagen.
-  boot.loader.systemd-boot.configurationLimit = 10;
+  boot.loader.grub = {
+    enable = true;
+    device = "nodev";                # UEFI: kein MBR-Geraet, installiert in die ESP
+    efiSupport = true;
+    useOSProber = true;              # Windows-Installation automatisch eintragen
+    # Nur die letzten Generationen im Menue behalten -> /boot laeuft nicht voll.
+    configurationLimit = 10;
+  };
+
+  # Elegant-GRUB-Theme (vinceliuice/Elegant-grub2-themes, via Flake-Modul).
+  # Setzt boot.loader.grub.theme/splashImage/gfxmode automatisch.
+  boot.loader.elegant-grub2-theme = {
+    enable = true;
+    theme = "forest";                # forest | mojave | mountain | wave
+    type = "window";                 # window | float | sharp | blur
+    color = "dark";
+    screen = "2k";                   # Monitore sind 2560x1440
+  };
   # Aktuellster Kernel (gut fuer neue Hardware wie Raptor Lake / RTX 4090)
   boot.kernelPackages = pkgs.linuxPackages_latest;
 

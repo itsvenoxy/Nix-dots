@@ -56,6 +56,14 @@
       url = "github:uiriansan/SilentSDDM";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Elegant GRUB-Theme (vinceliuice). Liefert ein NixOS-Modul
+    # (boot.loader.elegant-grub2-theme), das GRUB-Theme + splashImage +
+    # gfxmode automatisch setzt (siehe Bootloader-Block in configuration.nix).
+    elegant-grub2-themes = {
+      url = "github:vinceliuice/Elegant-grub2-themes";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:
@@ -71,6 +79,7 @@
 
           inputs.silentSDDM.nixosModules.default
           inputs.claude-cowork-nix.nixosModules.default
+          inputs.elegant-grub2-themes.nixosModules.default
 
           home-manager.nixosModules.home-manager
           {
