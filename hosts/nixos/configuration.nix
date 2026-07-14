@@ -87,6 +87,10 @@ in
   # Zeit & Sprache
   # ---------------------------------------------------------------------------
   time.timeZone = "Europe/Zurich";
+  # Dualboot mit Windows: Windows schreibt die Hardware-Uhr in Lokalzeit,
+  # Linux standardmaessig in UTC -> Uhrzeit springt nach jedem Windows-Boot.
+  # NixOS auf Lokalzeit umstellen loest das ohne Windows-Registry-Eingriff.
+  time.hardwareClockInLocalTime = true;
   i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
     LC_TIME = "de_CH.UTF-8";
